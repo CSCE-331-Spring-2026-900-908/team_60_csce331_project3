@@ -22,7 +22,11 @@ function HomePage() {
         <Link to="/kitchen">
           <button>Kitchen View</button>
         </Link>
-      </div>
+      
+	<Link to = "/menuboard">
+	  <button>Menu Board</button>
+	</Link>
+	</div>
     </div>
   );
 }
