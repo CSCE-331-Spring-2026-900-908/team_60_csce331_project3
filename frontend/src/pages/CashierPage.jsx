@@ -23,14 +23,15 @@ const CashierPage = () => {
 
     const submitOrder = async () => {
         const orderData = {
-		customer_id: 1, //Placeholder will be expanded upon
-                employee_id: 1, // Placeholder will be expanded upon
-                total_amount: total,
-                items: order.map(item => ({ 
-			menu_item_id: item.menu_item_id,
-                        quantity: 1,
-                        price: item.base_price
-		}))
+			customer_id: 1, //Placeholder will be expanded upon
+        	employee_id: 1, // Placeholder will be expanded upon
+        	total_amount: total,
+			//loop through items in order
+            items: order.map(item => ({  
+				menu_item_id: item.menu_item_id,
+                quantity: 1,
+                price: item.base_price
+			}))
         };
 
         try{
@@ -39,10 +40,10 @@ const CashierPage = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData)
             });
-            if(response.ok) {
+            if(response.ok){
                 alert("Order Placed Successfully!");
-               
-		setOrder([]); //clear current stored order 
+            	//reset current order state
+				setOrder([]); //clear current stored order 
                 setTotal(0);  //reset the current stored order total
             }
         } catch (err) {
@@ -54,26 +55,25 @@ const CashierPage = () => {
 	<div id="center">
 		<div className="hero">
 			<h1 style={{ color: 'var(--text-h)' }}>Cashier Interface</h1>
-                        <div className="ticks"></div>
-                </div>
+        	<div className="ticks"></div>
+            </div>
 
                 <div id="next-steps" style={{ width: '100%', maxWidth: '1200px' }}>
                         <div id="docs">
                                 <h2 className="icon" style={{ width: 'auto' }}>Drink Menu</h2>
-				<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
+								<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
                                          {menu?.map(item => (
-					<button 
+											<button 
                                                  key={item.menu_item_id} 
                                                  className="counter" 
                                                  onClick={() => addToOrder(item)}
-                                                 style={{ margin: 0, cursor: 'pointer', textAlign: 'center' }}
-                                                >
+                                                 style={{ margin: 0, cursor: 'pointer', textAlign: 'center' }}>
                                                 {item.name}<br/>
                                                 <small>${item.base_price}</small>
-                                        </button>
-				))}
+                                        	</button>
+										))}
                                </div>
-			</div>
+						</div>
 
                 <div>
                     <h2>Current Order</h2>
