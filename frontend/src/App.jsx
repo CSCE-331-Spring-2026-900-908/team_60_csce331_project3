@@ -1,5 +1,8 @@
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import CustomerPage from "./pages/CustomerPage";
+import ManagerStats from "./components/ManagerStats";
+import KitchenPage from "./pages/KitchenPage";
+
 
 function HomePage() {
   return (
@@ -28,10 +31,16 @@ function AdminPlaceholder() {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
       <h1>Admin Dashboard</h1>
-      <p>Admin page coming next.</p>
-      <Link to="/">
-        <button>Back Home</button>
-      </Link>
+      
+      {/* THIS IS YOUR MAJOR CONTRIBUTION */}
+      <ManagerStats /> 
+      
+      <div style={{ marginTop: "2rem", borderTop: "1px solid #ccc", paddingTop: "1rem" }}>
+        <p>Advanced Inventory and Employee tools coming soon.</p>
+        <Link to="/">
+          <button style={{ marginTop: "1rem" }}>Back to Portal</button>
+        </Link>
+      </div>
     </div>
   );
 }
@@ -55,7 +64,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/customer" element={<CustomerPage />} />
         <Route path="/admin" element={<AdminPlaceholder />} />
-        <Route path="/kitchen" element={<KitchenPlaceholder />} />
+        <Route path="/kitchen" element={<KitchenPage />} />
       </Routes>
     </BrowserRouter>
   );
