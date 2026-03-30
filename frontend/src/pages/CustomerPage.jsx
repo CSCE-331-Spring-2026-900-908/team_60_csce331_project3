@@ -1,9 +1,10 @@
+// CustomerPage.jsx - Customer-facing kiosk for browsing the menu and placing orders
 import { useEffect, useMemo, useState } from "react";
 import { fetchMenu, placeOrder } from "../services/api";
 
 export default function CustomerPage() {
   const [menuItems, setMenuItems] = useState([]);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState([]); // State for menu items fetched from the database, cart contents, and status messages
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -82,7 +83,7 @@ export default function CustomerPage() {
       setMessage(err.message || "Failed to place order.");
     }
   }
-
+// Group menu items by category for organized display on the page
   const grouped = menuItems.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = [];
     acc[item.category].push(item);
