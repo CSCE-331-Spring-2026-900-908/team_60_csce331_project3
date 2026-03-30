@@ -6,80 +6,80 @@ const CashierPage = () => {
     const [order, setOrder] = useState([]); // Stores current order information
     const [total, setTotal] = useState(0); // Stores info on price of order
 
-    useEffect(() => { 
-        fetch('http://localhost:8080/api/menu')
-            .then(res => {
-                if (!res.ok) throw new Error("Network could not be communicated with");
-                return res.json();
-            })
-            .then(data => setMenu(data))
-            .catch(err => console.error("Error fetching menu:", err));
+    useEffect(() => { //loads menu items on page launch 
+	fetch('http://localhost:8080/api/menu')
+		.then(res => {
+			if(!res.ok) throw new Error("Network could not be communicated with");
+			return res.json();
+		})
+		.then(data => setMenu(data))
+		.catch(err => console.error("Error fetching menu:", err));
     }, []);
 
     const addToOrder = (item) => {
-        setOrder([...order, item]);
+	setOrder([...order, item]);
         setTotal(prev => prev + parseFloat(item.base_price)); 
     };
 
     const submitOrder = async () => {
         const orderData = {
-            customer_id: 1, // Placeholder
-            employee_id: 1, // Placeholder
-            total_amount: total,
-            items: order.map(item => ({ 
-                menu_item_id: item.menu_item_id,
-                quantity: 1,
-                price: item.base_price
-            }))
+		customer_id: 1, //Placeholder will be expanded upon
+                employee_id: 1, // Placeholder will be expanded upon
+                total_amount: total,
+                items: order.map(item => ({ 
+			menu_item_id: item.menu_item_id,
+                        quantity: 1,
+                        price: item.base_price
+		}))
         };
 
-        try {
+        try{
             const response = await fetch('http://localhost:8080/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData)
             });
-            if (response.ok) {
+            if(response.ok) {
                 alert("Order Placed Successfully!");
-                setOrder([]); 
-                setTotal(0); 
+               
+		setOrder([]); //clear current stored order 
+                setTotal(0);  //reset the current stored order total
             }
         } catch (err) {
             console.error("Error submitting order:", err);
         }
     };
 
-    return (
-        <div id="center">
-            <div className="hero">
-                <h1 style={{ color: 'var(--text-h)' }}>Cashier Interface</h1>
-                <div className="ticks"></div>
-            </div>
-
-            <div id="next-steps" style={{ width: '100%', maxWidth: '1200px' }}>
-                <div id="docs">
-                    <h2 className="icon" style={{ width: 'auto' }}>Drink Menu</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
-                        {menu?.map(item => (
-                            <button 
-                                key={item.menu_item_id} 
-                                className="counter" 
-                                onClick={() => addToOrder(item)}
-                                style={{ margin: 0, cursor: 'pointer', textAlign: 'center' }}
-                            >
-                                {item.name}<br/>
-                                <small>${item.base_price}</small>
-                            </button>
-                        ))}
-                    </div>
+    return(
+	<div id="center">
+		<div className="hero">
+			<h1 style={{ color: 'var(--text-h)' }}>Cashier Interface</h1>
+                        <div className="ticks"></div>
                 </div>
+
+                <div id="next-steps" style={{ width: '100%', maxWidth: '1200px' }}>
+                        <div id="docs">
+                                <h2 className="icon" style={{ width: 'auto' }}>Drink Menu</h2>
+				<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
+                                         {menu?.map(item => (
+					<button 
+                                                 key={item.menu_item_id} 
+                                                 className="counter" 
+                                                 onClick={() => addToOrder(item)}
+                                                 style={{ margin: 0, cursor: 'pointer', textAlign: 'center' }}
+                                                >
+                                                {item.name}<br/>
+                                                <small>${item.base_price}</small>
+                                        </button>
+				))}
+                               </div>
+			</div>
 
                 <div>
                     <h2>Current Order</h2>
-                    <div style={{ minHeight: '200px', background: 'var(--social-bg)', borderRadius: '8px', padding: '16px', marginTop: '16px' }}>
-                        {/* Changed 'cart' to 'order' to match your state variable */}
-                        {order.length === 0 ? <p>Order is empty</p> : (
-                            <ul style={{ listStyle: 'none', padding: 0 }}>
+                    <div style={{ minHeight: '200px', background: 'var(--social-bg)', borderRadius: '8px', padding: '16px', marginTop: '16px', marginTop: '16px' }}>
+				{order.length === 0 ? <p>Order is empty</p> : (
+				<ul style={{ listStyle: 'none', padding: 0 }}>
                                 {order.map((item, idx) => (
                                     <li key={idx} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)' }}>
                                         {item.name} - ${item.base_price}
