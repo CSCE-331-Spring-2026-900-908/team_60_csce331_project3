@@ -9,7 +9,10 @@ export default function MenuBoardPage(){
 
 	useEffect(() => { //fetch menu on page loading
 		fetchMenu().then((items) => {
+			console.log("Fetched items:", items);
 			setMenu(items); //saves menu items into setMenu
+		}).catch(err => {
+			console.error("Fetch failed:", err);
 		});
 	}, []);
 	
