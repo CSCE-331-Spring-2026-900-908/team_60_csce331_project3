@@ -3,6 +3,7 @@ import CustomerPage from "./pages/CustomerPage";
 import ManagerStats from "./components/ManagerStats";
 import KitchenPage from "./pages/KitchenPage";
 import MenuBoardPage from "./pages/MenuBoardPage";
+import CashierPage from "./pages/CashierPage";
 
 function HomePage() {
   return (
@@ -27,6 +28,10 @@ function HomePage() {
 	  <button>Menu Board</button>
 	</Link>
 	</div>
+	
+	<Link to = "/cashierpage">
+	  <button>Cashier Page</button>
+	</Link>
     </div>
   );
 }
@@ -70,7 +75,8 @@ export default function App() {
         <Route path="/admin" element={<AdminPlaceholder />} />
         <Route path="/kitchen" element={<KitchenPage />} />
 	<Route path = "/menuboard" element = {<MenuBoardPage />} />
-	</Routes>
+	<Route path = "/cashierpage" element = {<CashierPage />} />	
+      </Routes>
     </BrowserRouter>
   );
 }
