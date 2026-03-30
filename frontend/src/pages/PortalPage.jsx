@@ -22,6 +22,11 @@ export default function PortalPage() {
           <h2>Manager</h2>
           <p>Coming soon</p>
         </div>
+	
+	<div style = {{ border: "1px solid #ccc", padding: "1rem", width: "220px" }}>
+		<h2>Menu Board</h2>
+		<p>Coming soon</p>
+	</div>
       </div>
     </div>
   );
