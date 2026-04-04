@@ -36,6 +36,12 @@ export async function placeOrder(orderData) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(orderData),
   });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to place order in database");
+  }
+  
   return response.json();
 }
 

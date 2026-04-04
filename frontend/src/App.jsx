@@ -1,67 +1,47 @@
-import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Link } from "react-router-dom";
+import PortalPage from "./pages/PortalPage"; 
 import CustomerPage from "./pages/CustomerPage";
 import ManagerStats from "./components/ManagerStats";
 import KitchenPage from "./pages/KitchenPage";
 import MenuBoardPage from "./pages/MenuBoardPage";
 import CashierPage from "./pages/CashierPage";
 
-function HomePage() {
-  return (
-    <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
-      <h1>Drink Shop System</h1>
-      <p>Select a page:</p>
-
-      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-        <Link to="/customer">
-          <button>Customer Kiosk</button>
-        </Link>
-
-        <Link to="/admin">
-          <button>Admin Dashboard</button>
-        </Link>
-
-        <Link to="/kitchen">
-          <button>Kitchen View</button>
-        </Link>
-      
-	<Link to = "/menuboard">
-	  <button>Menu Board</button>
-	</Link>
-	</div>
-	
-	<Link to = "/cashierpage">
-	  <button>Cashier Page</button>
-	</Link>
-    </div>
-  );
-}
-
+// The Manager Dashboard View
 function AdminPlaceholder() {
   return (
-    <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
-      <h1>Admin Dashboard</h1>
+    <div style={{ 
+      padding: "4rem", 
+      fontFamily: "Arial, sans-serif", 
+      backgroundColor: "#16171d", 
+      color: "white", 
+      minHeight: "100vh",
+      textAlign: "center"
+    }}>
+      <h1 style={{ fontSize: "3rem", marginBottom: "2rem" }}>Manager Dashboard</h1>
       
-      {/* THIS IS YOUR MAJOR CONTRIBUTION */}
-      <ManagerStats /> 
-      
-      <div style={{ marginTop: "2rem", borderTop: "1px solid #ccc", paddingTop: "1rem" }}>
-        <p>Advanced Inventory and Employee tools coming soon.</p>
+      <div style={{ background: "#1f2028", padding: "2rem", borderRadius: "15px", maxWidth: "1000px", margin: "0 auto" }}>
+        <ManagerStats /> 
+      </div>
+
+      <div style={{ marginTop: "3rem", borderTop: "1px solid #2e303a", paddingTop: "2rem" }}>
+        <p style={{ color: "#9ca3af" }}>Advanced Inventory and Employee tools coming soon.</p>
+        
         <Link to="/">
-          <button style={{ marginTop: "1rem" }}>Back to Portal</button>
+          <button style={{ 
+            marginTop: "2rem", 
+            padding: "1rem 2.5rem", 
+            backgroundColor: "#aa3bff", 
+            color: "white", 
+            border: "none", 
+            borderRadius: "12px",
+            cursor: "pointer",
+            fontWeight: "bold",
+            fontSize: "1.1rem"
+          }}>
+            ← Back to Portal
+          </button>
         </Link>
       </div>
-    </div>
-  );
-}
-
-function KitchenPlaceholder() {
-  return (
-    <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
-      <h1>Kitchen View</h1>
-      <p>Kitchen page coming next.</p>
-      <Link to="/">
-        <button>Back Home</button>
-      </Link>
     </div>
   );
 }
@@ -70,12 +50,15 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        {/* Main Landing Page */}
+        <Route path="/" element={<PortalPage />} />
+        
+        {/* System Pages */}
         <Route path="/customer" element={<CustomerPage />} />
-        <Route path="/admin" element={<AdminPlaceholder />} />
+        <Route path="/manager" element={<AdminPlaceholder />} /> 
         <Route path="/kitchen" element={<KitchenPage />} />
-	<Route path = "/menuboard" element = {<MenuBoardPage />} />
-	<Route path = "/cashierpage" element = {<CashierPage />} />	
+        <Route path="/menuboard" element={<MenuBoardPage />} />
+        <Route path="/cashierpage" element={<CashierPage />} /> 
       </Routes>
     </BrowserRouter>
   );
