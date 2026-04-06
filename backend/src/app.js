@@ -12,18 +12,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- AI CHAT ROUTE (GROQ) ---
+// --- AI CHAT ROUTE (GROQ + MENU KNOWLEDGE) ---
 app.post("/api/chat", async (req, res) => {
   const apiKey = process.env.GROQ_API_KEY; 
   const url = "https://api.groq.com/openai/v1/chat/completions";
 
-  console.log("🚀 Calling Groq API (Llama 3)...");
-  console.log("📩 User Message:", req.body.message);
+  // 1. The Strict Knowledge Base
+  const menuData = `
+    OFFICIAL REVEILLE BOBA MENU (ONLY USE THESE):
+    - Taro Milk Tea: $6.00
+    - Fruit Teas: $5.75 (Mango, Passionfruit, Peach, Strawberry)
+    - Slushes: $6.25 (Mango, Strawberry)
+    - Classic Milk Tea: $5.50
+    - Matcha Latte: $6.25
+  `;
 
-  if (!apiKey) {
-    console.error("❌ ERROR: GROQ_API_KEY is not defined in .env");
-    return res.status(500).json({ error: "AI configuration missing." });
-  }
+  // 2. The Strict Instructions
+  const systemInstructions = "You are Reveille-Bot, the friendly mascot for Reveille Bubble Tea. Always be polite, say 'Howdy' or 'Gig 'em', and ONLY use the provided menu and prices. Keep it to one sentence.";
 
   try {
     const response = await fetch(url, {
@@ -34,34 +39,26 @@ app.post("/api/chat", async (req, res) => {
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
+        temperature: 0.0, // Absolute zero creativity
         messages: [
-          { 
-            role: "system", 
-            content: "You are Reveille-Bot, a friendly AI for a Boba Tea Shop. You love Texas A&M and suggest boba drinks. Keep answers short and fun." 
-          },
+          { role: "system", content: systemInstructions },
           { 
             role: "user", 
-            content: req.body.message 
+            content: `Context: ${menuData}\n\nUser Question: ${req.body.message}\n\nAnswer only using the context provided:` 
           }
         ],
-        max_completion_tokens: 150 
+        max_completion_tokens: 50 
       })
     });
 
     const data = await response.json();
-    
-    if (data.error) {
-      console.error("❌ Groq Error:", data.error.message);
-      return res.status(400).json({ error: data.error.message });
-    }
-
     const reply = data.choices[0].message.content;
+    
     console.log("✅ Bot Replied:", reply);
     res.json({ reply });
 
   } catch (error) {
-    console.error("🛑 Network Error:", error.message);
-    res.status(500).json({ error: "AI is currently offline." });
+    res.status(500).json({ error: "AI error" });
   }
 });
 
@@ -76,7 +73,6 @@ app.get("/api/weather", async (req, res) => {
   }
 });
 
-// --- ROUTES ---
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/inventory", inventoryRoutes);
