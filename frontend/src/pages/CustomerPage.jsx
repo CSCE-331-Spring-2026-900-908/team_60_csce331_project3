@@ -35,12 +35,13 @@ export default function CustomerPage() {
 
   const categories = useMemo(() => {
     const rawCats = [...new Set(menuItems.map(item => getCleanCat(item)))];
-    return ["all", ...rawCats.filter(c => c !== 'topping' && c !== "")];
+    return ["all", "recommended",  ...rawCats.filter(c => c !== 'topping' && c !== "")];
   }, [menuItems]);
 
   const filteredItems = useMemo(() => {
     const drinks = menuItems.filter(item => getCleanCat(item) !== 'topping');
     if (activeCategory === "all") return drinks;
+    if(activeCategory == "recommended") return drinks; //temporary 
     return drinks.filter(item => getCleanCat(item) === activeCategory);
   }, [menuItems, activeCategory]);
 
