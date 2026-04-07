@@ -2,11 +2,21 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from "react-router-dom";
 import '../App.css'; 
 
+
+
 const CashierPage = () => {
     const [menu, setMenu] = useState([]); 
     const [order, setOrder] = useState([]); 
     const [total, setTotal] = useState(0);
     const [selectedDrinkIdx, setSelectedDrinkIdx] = useState(null);
+    const logoStyle = { 
+        fontSize: '3.5rem', 
+        fontWeight: '800', // This makes "aura" thick
+        letterSpacing: '-1px', 
+        margin: 0,
+        color: '#1b4332',
+        textTransform: 'lowercase' 
+    };
 
     useEffect(() => { 
         fetch('http://localhost:8080/api/menu')
@@ -14,6 +24,8 @@ const CashierPage = () => {
             .then(data => setMenu(data))
             .catch(err => console.error("Error fetching menu:", err));
     }, []);
+
+
 
     const drinks = useMemo(() => menu.filter(item => item.category?.toLowerCase().trim() !== 'topping'), [menu]);
     const toppingsOptions = useMemo(() => menu.filter(item => item.category?.toLowerCase().trim() === 'topping'), [menu]);
@@ -112,7 +124,7 @@ const CashierPage = () => {
 
             <header style={auraHeader}>
                 <div style={{ display:'flex', alignItems:'center' }}>
-                    <h1 style={logoStyle}>aura <span style={{fontWeight:'300'}}>cashier</span></h1>
+                    <h1 style={logoStyle}>aura <span style={{fontWeight: '300'}}>cashier</span></h1>
                 </div>
             </header>
 

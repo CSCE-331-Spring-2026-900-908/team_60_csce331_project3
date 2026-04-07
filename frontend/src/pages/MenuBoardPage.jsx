@@ -7,6 +7,14 @@ export default function MenuBoardPage() {
   const [menu, setMenu] = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [categories, setCategories] = useState([]);
+  const logoStyle = { 
+        fontSize: '3.5rem', 
+        fontWeight: '800', // This makes "aura" thick
+        letterSpacing: '-1px', 
+        margin: 0,
+        color: '#1b4332',
+        textTransform: 'lowercase' 
+    };
 
   useEffect(() => {
     fetchMenu().then((items) => {

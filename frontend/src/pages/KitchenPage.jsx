@@ -5,6 +5,14 @@ import { Link } from "react-router-dom";
 export default function KitchenPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const logoStyle = { 
+        fontSize: '3.5rem', 
+        fontWeight: '800', // This makes "aura" thick
+        letterSpacing: '-1px', 
+        margin: 0,
+        color: '#1b4332',
+        textTransform: 'lowercase' 
+    };
 
   const loadOrders = async () => {
     try {

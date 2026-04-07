@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchSalesSummary, fetchProductUsage } from "../services/api";
 
 export default function ManagerStats() {
@@ -6,7 +7,7 @@ export default function ManagerStats() {
   const [usageData, setUsageData] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Adjusted default dates to ensure data shows up for 2026
+  // Adjusted default dates for the 2026 project scope
   const [startDate, setStartDate] = useState("2026-01-01");
   const [endDate, setEndDate] = useState("2026-12-31");
 
@@ -18,7 +19,7 @@ export default function ManagerStats() {
         fetchProductUsage(startDate, endDate)
       ]);
       setStats(sales);
-      setUsageData(usage || []); // Ensure it defaults to empty array if null
+      setUsageData(usage || []); 
     } catch (err) {
       console.error("Failed to load manager data:", err);
     } finally {
@@ -31,54 +32,65 @@ export default function ManagerStats() {
   }, []);
 
   return (
-    <div style={{ padding: "1rem", color: "white" }}>
-      {/* Top Cards Section */}
-      <div style={{ display: "flex", gap: "1.5rem", justifyContent: "center", flexWrap: "wrap", marginBottom: "2rem" }}>
-        <div style={cardStyle}>
+    <div style={auraContainer}>
+      {/* 1. STANDARDIZED BACK BUTTON - Absolute position matches Kiosk/Cashier/Kitchen */}
+      <Link to="/" style={backBtnStyle}>← portal</Link>
+
+      {/* 2. HEADER */}
+      <header style={auraHeader}>
+        <div>
+          <h1 style={logoStyle}>aura <span style={{fontWeight: '300'}}>stats</span></h1>
+          <p style={subtitle}>performance & inventory tracking</p>
+        </div>
+      </header>
+
+      {/* 3. TOP STAT CARDS */}
+      <div style={statGrid}>
+        <div style={glassCard}>
           <h3 style={labelStyle}>Total Revenue</h3>
           <p style={moneyStyle}>
             ${Number(stats.total_revenue).toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </p>
         </div>
-        <div style={cardStyle}>
+        <div style={glassCard}>
           <h3 style={labelStyle}>Total Orders</h3>
-          <p style={numberStyle}>{stats.total_orders}</p>
+          <p style={numberStyle}>{stats.total_orders.toLocaleString()}</p>
         </div>
       </div>
 
-      <hr style={{ margin: "3rem 0", borderColor: "#2e303a" }} />
+      <hr style={divider} />
 
-      {/* Product Usage Section */}
-      <section style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <h2 style={{ textAlign: "center", color: "white", marginBottom: "1.5rem", fontSize: "2rem" }}>
-          Product Usage Report
-        </h2>
+      {/* 4. PRODUCT USAGE SECTION */}
+      <section style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        <h2 style={sectionTitle}>Product Usage Report</h2>
         
         {/* Date Controls */}
-        <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginBottom: "2.5rem", alignItems: "center" }}>
-          <input 
-            type="date" 
-            value={startDate} 
-            onChange={(e) => setStartDate(e.target.value)} 
-            style={inputStyle}
-          />
-          <span style={{ color: "#9ca3af" }}>to</span>
-          <input 
-            type="date" 
-            value={endDate} 
-            onChange={(e) => setEndDate(e.target.value)} 
-            style={inputStyle}
-          />
-          <button onClick={loadData} style={buttonStyle}>Update Report</button>
+        <div style={filterBar}>
+            <div style={datePickerGroup}>
+                <input 
+                    type="date" 
+                    value={startDate} 
+                    onChange={(e) => setStartDate(e.target.value)} 
+                    style={dateInput}
+                />
+                <span style={{ opacity: 0.5 }}>to</span>
+                <input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={(e) => setEndDate(e.target.value)} 
+                    style={dateInput}
+                />
+                <button onClick={loadData} style={updateBtn}>Update Report</button>
+            </div>
         </div>
 
         {loading ? (
-          <p style={{ textAlign: "center", color: "#aa3bff" }}>Updating usage data...</p>
+          <p style={{ textAlign: "center", color: "#2d6a4f", fontWeight: '700' }}>steeping usage data...</p>
         ) : (
-          <div style={{ backgroundColor: "#1f2028", borderRadius: "12px", overflow: "hidden", border: "1px solid #2e303a" }}>
-            <table style={tableStyle}>
+          <div style={tableWrapper}>
+            <table style={auraTable}>
               <thead>
-                <tr style={{ backgroundColor: "#2e303a" }}>
+                <tr style={tableHeaderRow}>
                   <th style={thStyle}>Inventory Item</th>
                   <th style={thStyle}>Total Used</th>
                   <th style={thStyle}>Usage Visualization</th>
@@ -87,26 +99,27 @@ export default function ManagerStats() {
               <tbody>
                 {usageData.length > 0 ? (
                   usageData.map((item, index) => (
-                    <tr key={index} style={{ borderBottom: "1px solid #2e303a" }}>
-                      <td style={tdStyle}>{item.inventory_item}</td>
+                    <tr key={index} style={trStyle}>
+                      <td style={tdStyle}>{item.inventory_item.toLowerCase()}</td>
                       <td style={tdStyle}>
-                        <span style={{ fontWeight: "bold", color: "#aa3bff" }}>{item.total_usage}</span> 
-                        <span style={{ color: "#9ca3af", fontSize: "0.85rem", marginLeft: "5px" }}>({item.unit})</span>
+                        <span style={{ fontWeight: "800", color: "#1b4332" }}>{item.total_usage}</span> 
+                        <span style={{ color: "#64748b", fontSize: "0.8rem", marginLeft: "5px" }}>{item.unit}</span>
                       </td>
                       <td style={tdStyle}>
-                        <div style={{
-                          height: "10px",
-                          background: "linear-gradient(90deg, #aa3bff, #6b21a8)",
-                          borderRadius: "5px",
-                          width: `${Math.min((item.total_usage / 100) * 100, 100)}%`, // Better scaling logic
-                          boxShadow: "0 0 8px rgba(170, 59, 255, 0.4)"
-                        }}></div>
+                        <div style={progressBarBg}>
+                          <div style={{
+                            height: "100%",
+                            background: "#52b788",
+                            borderRadius: "10px",
+                            width: `${Math.min((item.total_usage / 100) * 100, 100)}%`,
+                          }}></div>
+                        </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="3" style={{ ...tdStyle, textAlign: "center", padding: "3rem", color: "#9ca3af" }}>
+                    <td colSpan="3" style={emptyCell}>
                       No usage data found for this period.
                     </td>
                   </tr>
@@ -120,58 +133,70 @@ export default function ManagerStats() {
   );
 }
 
-// --- Styles Overhaul ---
-const tableStyle = { 
-  width: "100%", 
-  borderCollapse: "collapse", 
-  color: "white" 
+// --- AURA MANAGER STYLES ---
+const auraContainer = { 
+    background: '#e8f5e9', 
+    minHeight: '100vh', 
+    padding: '2rem 4rem', 
+    fontFamily: '"Inter", sans-serif', 
+    color: '#1b4332', 
+    position: 'relative' 
 };
 
-const thStyle = { 
-  padding: "16px", 
-  textAlign: "left", 
-  color: "#aa3bff", 
-  textTransform: "uppercase", 
-  fontSize: "0.85rem", 
-  letterSpacing: "1px" 
+const auraHeader = { 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: '3rem', 
+    marginTop: '40px' 
 };
 
-const tdStyle = { 
-  padding: "16px", 
-  textAlign: "left",
-  fontSize: "1rem"
+const logoStyle = { fontSize: '3.5rem', fontWeight: '800', letterSpacing: '-1px', margin: 0 };
+const subtitle = { margin: 0, opacity: 0.6, fontWeight: '700', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '2px' };
+
+const backBtnStyle = {
+    position: 'absolute',
+    top: '30px',
+    left: '40px',
+    zIndex: 100,
+    textDecoration: 'none',
+    color: '#1b4332',
+    fontSize: '0.75rem',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    background: 'rgba(255, 255, 255, 0.5)',
+    backdropFilter: 'blur(10px)',
+    padding: '10px 22px',
+    borderRadius: '50px',
+    border: '1px solid rgba(27, 67, 50, 0.1)',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.02)'
 };
 
-const inputStyle = {
-  padding: "0.6rem",
-  borderRadius: "8px",
-  border: "1px solid #2e303a",
-  backgroundColor: "#1f2028",
-  color: "white",
-  outline: "none"
-};
+const statGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' };
+const glassCard = { background: 'rgba(255, 255, 255, 0.6)', backdropFilter: 'blur(10px)', padding: '2.5rem', borderRadius: '30px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.3)', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' };
 
-const buttonStyle = { 
-  padding: "0.6rem 1.5rem", 
-  backgroundColor: "#aa3bff", 
-  color: "white", 
-  border: "none", 
-  borderRadius: "8px", 
-  cursor: "pointer",
-  fontWeight: "bold",
-  transition: "opacity 0.2s"
-};
+const labelStyle = { margin: "0 0 10px 0", color: "#64748b", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "2px", fontWeight: '700' };
+const moneyStyle = { margin: 0, fontSize: "3rem", fontWeight: "900", color: "#1b4332" };
+const numberStyle = { margin: 0, fontSize: "3rem", fontWeight: "900", color: "#52b788" };
 
-const cardStyle = { 
-  border: "1px solid #2e303a", 
-  padding: "2rem", 
-  borderRadius: "16px", 
-  background: "#1f2028", 
-  minWidth: "280px", 
-  textAlign: "center",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
-};
+const divider = { border: 'none', borderTop: '1px solid rgba(27, 67, 50, 0.1)', margin: '3rem 0' };
+const sectionTitle = { textAlign: "center", color: "#1b4332", marginBottom: "2rem", fontSize: "1.8rem", fontWeight: '800' };
 
-const labelStyle = { margin: "0 0 10px 0", color: "#9ca3af", fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "1px" };
-const moneyStyle = { margin: 0, fontSize: "2.5rem", fontWeight: "bold", color: "#2ecc71" };
-const numberStyle = { margin: 0, fontSize: "2.5rem", fontWeight: "bold", color: "#aa3bff" };
+const filterBar = { display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' };
+const datePickerGroup = { background: 'white', padding: '10px 20px', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' };
+const dateInput = { border: 'none', outline: 'none', fontFamily: 'inherit', fontWeight: '600', color: '#1b4332', background: 'transparent' };
+const updateBtn = { background: '#1b4332', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '50px', fontWeight: '700', cursor: 'pointer' };
+
+const tableWrapper = { background: 'white', borderRadius: '30px', overflow: 'hidden', border: '1px solid #c8e6c9', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' };
+const auraTable = { width: '100%', borderCollapse: 'collapse' };
+const tableHeaderRow = { background: '#f1f8f1' };
+const thStyle = { padding: '1.2rem', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6, color: '#1b4332' };
+const tdStyle = { padding: '1.2rem', borderBottom: '1px solid #f1f8f1', fontSize: '1rem', color: '#1b4332' };
+const trStyle = { transition: 'background 0.2s' };
+
+const progressBarBg = { background: '#e8f5e9', height: '12px', borderRadius: '10px', width: '100%', overflow: 'hidden' };
+const emptyCell = { padding: "4rem", textAlign: "center", color: "#94a3b8", fontWeight: '600' };

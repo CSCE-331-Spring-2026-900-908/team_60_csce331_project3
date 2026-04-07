@@ -8,6 +8,14 @@ export default function CustomerPage() {
   const [cart, setCart] = useState([]);
   const [message, setMessage] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+  const logoStyle = { 
+        fontSize: '3.5rem', 
+        fontWeight: '800', // This makes "aura" thick
+        letterSpacing: '-1px', 
+        margin: 0,
+        color: '#1b4332',
+        textTransform: 'lowercase' 
+    };
   
   // Modal State
   const [showToppings, setShowToppings] = useState(false);

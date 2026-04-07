@@ -10,6 +10,14 @@ export default function ManagerDashboard() {
         text: '#1b4332',
         glass: 'rgba(255, 255, 255, 0.7)'
     };
+    const logoStyle = { 
+        fontSize: '3.5rem', 
+        fontWeight: '800', // This makes "aura" thick
+        letterSpacing: '-1px', 
+        margin: 0,
+        color: '#1b4332',
+        textTransform: 'lowercase' 
+    };
 
     return (
         <div style={auraContainer}>
@@ -19,7 +27,7 @@ export default function ManagerDashboard() {
             {/* Header */}
             <header style={auraHeader}>
                 <div>
-                    <h1 style={logoStyle}>aura <span style={{ fontWeight: '300' }}>analytics</span></h1>
+                    <h1 style={logoStyle}>aura <span style={{fontWeight: '300'}}>stats</span></h1>
                     <p style={subtitleStyle}>inventory & revenue insights</p>
                 </div>
             </header>
