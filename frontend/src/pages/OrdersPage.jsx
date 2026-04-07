@@ -13,13 +13,15 @@ export default function ManagerDashboard() {
 
     return (
         <div style={auraContainer}>
+            {/* Standardized Absolute Back Button - Matches Kiosk, Cashier, and Kitchen exactly */}
+            <Link to="/" style={backBtnStyle}>← portal</Link>
+
             {/* Header */}
             <header style={auraHeader}>
                 <div>
                     <h1 style={logoStyle}>aura <span style={{ fontWeight: '300' }}>analytics</span></h1>
                     <p style={subtitleStyle}>inventory & revenue insights</p>
                 </div>
-                <Link to="/" style={backBtn}>← portal</Link>
             </header>
 
             {/* Top Stat Cards */}
@@ -82,11 +84,47 @@ export default function ManagerDashboard() {
 }
 
 // --- AURA STYLING ---
-const auraContainer = { background: '#e8f5e9', minHeight: '100vh', padding: '2rem 4rem', fontFamily: '"Inter", sans-serif', color: '#1b4332' };
-const auraHeader = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' };
-const logoStyle = { fontSize: '2.5rem', fontWeight: '800', letterSpacing: '-1px', margin: 0 };
+const auraContainer = { 
+    background: '#e8f5e9', 
+    minHeight: '100vh', 
+    padding: '2rem 4rem', 
+    fontFamily: '"Inter", sans-serif', 
+    color: '#1b4332',
+    position: 'relative' // Critical for absolute positioning of back button
+};
+
+const backBtnStyle = {
+    position: 'absolute',
+    top: '30px',
+    left: '40px',
+    zIndex: 100,
+    textDecoration: 'none',
+    color: '#1b4332',
+    fontSize: '0.75rem',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    background: 'rgba(255, 255, 255, 0.5)',
+    backdropFilter: 'blur(10px)',
+    padding: '10px 22px',
+    borderRadius: '50px',
+    border: '1px solid rgba(27, 67, 50, 0.1)',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.02)'
+};
+
+const auraHeader = { 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: '3rem',
+    marginTop: '40px' // Provides clearance for the back button
+};
+
+const logoStyle = { fontSize: '3.5rem', fontWeight: '800', letterSpacing: '-1px', margin: 0 };
 const subtitleStyle = { margin: 0, opacity: 0.6, fontWeight: '700', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '2px' };
-const backBtn = { textDecoration: 'none', color: '#1b4332', fontWeight: '700', border: '1px solid rgba(27,67,50,0.2)', padding: '8px 20px', borderRadius: '50px' };
 
 const statGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' };
 const glassCard = { background: 'rgba(255, 255, 255, 0.6)', backdropFilter: 'blur(10px)', padding: '2.5rem', borderRadius: '30px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.3)', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' };
@@ -100,7 +138,7 @@ const datePickerGroup = { background: 'white', padding: '10px 20px', borderRadiu
 const dateInput = { border: 'none', outline: 'none', fontFamily: 'inherit', fontWeight: '600', color: '#1b4332' };
 const updateBtn = { background: '#1b4332', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '50px', fontWeight: '700', cursor: 'pointer' };
 
-const tableContainer = { background: 'white', borderRadius: '30px', overflow: 'hidden', border: '1px solid #c8e6c9' };
+const tableContainer = { background: 'white', borderRadius: '30px', overflow: 'hidden', border: '1px solid #c8e6c9', marginBottom: '2rem' };
 const auraTable = { width: '100%', borderCollapse: 'collapse' };
 const tableHeaderRow = { background: '#f1f8f1' };
 const thStyle = { padding: '1.2rem', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6 };

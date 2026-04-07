@@ -54,7 +54,7 @@ export default function PortalPage() {
         position: "absolute", 
         top: "2rem", 
         right: "2rem",
-        background: "rgba(255, 255, 255, 0.5)",
+        background: "#2d6a4f",
         padding: "0.5rem 1.2rem",
         borderRadius: "50px",
         backdropFilter: "blur(5px)"

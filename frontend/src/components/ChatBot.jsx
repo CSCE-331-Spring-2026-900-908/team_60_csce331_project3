@@ -3,10 +3,9 @@ import React, { useState, useEffect, useRef } from "react";
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([{ role: "bot", text: "Howdy! I'm Reveille-Bot. What's on your mind?" }]);
+  const [messages, setMessages] = useState([{ role: "bot", text: "Howdy! I'm your Aura Guide. Looking for a drink recommendation?" }]);
   const chatEndRef = useRef(null);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -28,59 +27,175 @@ const ChatBot = () => {
       if (data.reply) {
         setMessages(prev => [...prev, { role: "bot", text: data.reply }]);
       } else {
-        throw new Error("No reply from bot");
+        throw new Error("No reply");
       }
     } catch (err) {
-      console.error("Frontend Fetch Error:", err);
-      setMessages(prev => [...prev, { role: "bot", text: "Connection error. Is the backend running?" }]);
+      setMessages(prev => [...prev, { role: "bot", text: "I'm having trouble connecting to the tea leaves. Is the backend running?" }]);
     }
   };
 
   return (
-    <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}>
+    <div style={{ position: "fixed", bottom: "30px", right: "30px", zIndex: 2000, fontFamily: "'Inter', sans-serif" }}>
       {isOpen ? (
-        <div style={{ width: "320px", height: "450px", background: "#1f2028", border: "1px solid #aa3bff", borderRadius: "15px", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}>
-          <div style={{ background: "#aa3bff", padding: "12px", fontWeight: "bold", color: "white", display: "flex", justifyContent: "space-between" }}>
-            <span>🧋 Reveille Bot</span>
-            <button onClick={() => setIsOpen(false)} style={{ background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "1.2rem" }}>✕</button>
+        <div style={chatWindow}>
+          {/* Header */}
+          <div style={chatHeader}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={statusDot}></div>
+              <span style={{ fontWeight: "800", letterSpacing: "0.5px" }}>aura guide</span>
+            </div>
+            <button onClick={() => setIsOpen(false)} style={closeBtn}>✕</button>
           </div>
           
-          <div style={{ flex: 1, padding: "15px", overflowY: "auto", color: "white" }}>
+          {/* Messages Area */}
+          <div style={messageContainer}>
             {messages.map((m, i) => (
-              <div key={i} style={{ marginBottom: "12px", textAlign: m.role === "user" ? "right" : "left" }}>
-                <span style={{ 
-                  background: m.role === "user" ? "#aa3bff" : "#2e303a", 
-                  padding: "8px 14px", 
-                  borderRadius: "12px", 
+              <div key={i} style={{ marginBottom: "15px", textAlign: m.role === "user" ? "right" : "left" }}>
+                <div style={{ 
+                  background: m.role === "user" ? "#2d6a4f" : "rgba(255,255,255,0.8)", 
+                  color: m.role === "user" ? "white" : "#1b4332", 
+                  padding: "10px 16px", 
+                  borderRadius: m.role === "user" ? "20px 20px 4px 20px" : "20px 20px 20px 4px", 
                   display: "inline-block",
-                  maxWidth: "80%",
+                  maxWidth: "85%",
+                  fontSize: "0.9rem",
+                  fontWeight: m.role === "user" ? "500" : "600",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
                   lineHeight: "1.4"
                 }}>
                   {m.text}
-                </span>
+                </div>
               </div>
             ))}
             <div ref={chatEndRef} />
           </div>
 
-          <div style={{ padding: "15px", borderTop: "1px solid #2e303a", display: "flex", gap: "8px" }}>
+          {/* Input Area */}
+          <div style={inputArea}>
             <input 
               value={input} 
               onChange={(e) => setInput(e.target.value)} 
               onKeyPress={(e) => e.key === "Enter" && sendMessage()} 
-              style={{ flex: 1, background: "#16171d", border: "1px solid #2e303a", color: "white", padding: "10px", borderRadius: "8px" }} 
-              placeholder="Type here..." 
+              style={textInput} 
+              placeholder="Ask about flavors..." 
             />
-            <button onClick={sendMessage} style={{ background: "#aa3bff", color: "white", border: "none", borderRadius: "8px", padding: "0 15px", fontWeight: "bold", cursor: "pointer" }}>Go</button>
+            <button onClick={sendMessage} style={sendBtn}>→</button>
           </div>
         </div>
       ) : (
-        <button onClick={() => setIsOpen(true)} style={{ width: "65px", height: "65px", borderRadius: "50%", background: "#aa3bff", color: "white", fontSize: "2.2rem", border: "none", cursor: "pointer", boxShadow: "0 5px 20px rgba(170, 59, 255, 0.5)" }}>
-          💬
+        /* Floating Toggle Button */
+        <button onClick={() => setIsOpen(true)} style={toggleBtn}>
+          <span style={{ fontSize: "1.8rem" }}>🧋</span>
+          <div style={notificationPing}></div>
         </button>
       )}
     </div>
   );
+};
+
+// --- AURA CHAT STYLES ---
+const chatWindow = {
+  width: "350px",
+  height: "500px",
+  background: "rgba(232, 245, 233, 0.95)", // Mint glass
+  backdropFilter: "blur(15px)",
+  border: "1px solid rgba(255, 255, 255, 0.5)",
+  borderRadius: "30px",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+  boxShadow: "0 20px 40px rgba(27, 67, 50, 0.15)"
+};
+
+const chatHeader = {
+  background: "#1b4332",
+  padding: "20px",
+  color: "white",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  textTransform: "uppercase",
+  fontSize: "0.75rem"
+};
+
+const statusDot = {
+  width: "8px",
+  height: "8px",
+  background: "#52b788",
+  borderRadius: "50%",
+  boxShadow: "0 0 10px #52b788"
+};
+
+const closeBtn = {
+  background: "none",
+  border: "none",
+  color: "white",
+  cursor: "pointer",
+  fontSize: "1rem",
+  opacity: 0.7
+};
+
+const messageContainer = {
+  flex: 1,
+  padding: "20px",
+  overflowY: "auto",
+  scrollbarWidth: "none"
+};
+
+const inputArea = {
+  padding: "20px",
+  background: "white",
+  display: "flex",
+  gap: "10px",
+  borderTop: "1px solid rgba(0,0,0,0.05)"
+};
+
+const textInput = {
+  flex: 1,
+  background: "#f1f8f1",
+  border: "none",
+  color: "#1b4332",
+  padding: "12px 15px",
+  borderRadius: "15px",
+  outline: "none",
+  fontSize: "0.9rem",
+  fontWeight: "600"
+};
+
+const sendBtn = {
+  background: "#2d6a4f",
+  color: "white",
+  border: "none",
+  borderRadius: "12px",
+  width: "45px",
+  fontWeight: "bold",
+  cursor: "pointer",
+  fontSize: "1.2rem",
+  transition: "0.2s"
+};
+
+const toggleBtn = {
+  width: "70px",
+  height: "70px",
+  borderRadius: "24px",
+  background: "#1b4332",
+  color: "white",
+  border: "none",
+  cursor: "pointer",
+  boxShadow: "0 10px 25px rgba(27, 67, 50, 0.3)",
+  position: "relative",
+  transition: "transform 0.3s ease"
+};
+
+const notificationPing = {
+  position: "absolute",
+  top: "-2px",
+  right: "-2px",
+  width: "14px",
+  height: "14px",
+  background: "#52b788",
+  borderRadius: "50%",
+  border: "3px solid #e8f5e9"
 };
 
 export default ChatBot;

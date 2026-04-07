@@ -39,9 +39,6 @@ export default function KitchenPage() {
 
   /**
    * Helper: Grouping Logic
-   * In the DB, toppings are separate items. We need to find items 
-   * that aren't 'topping' and then check if the items following them ARE toppings.
-   * This assumes the backend returns items in the order they were inserted.
    */
   const groupOrderItems = (items) => {
     if (!items) return [];
@@ -58,7 +55,6 @@ export default function KitchenPage() {
       } else if (currentDrink) {
         currentDrink.toppings.push(item);
       } else {
-        // Fallback if a topping somehow appears first
         grouped.push({ ...item, toppings: [] });
       }
     });
@@ -69,12 +65,14 @@ export default function KitchenPage() {
 
   return (
     <div style={auraContainer}>
+      {/* Standardized Absolute Back Button - Anchored to screen */}
+      <Link to="/" style={backBtnStyle}>← portal</Link>
+
       <header style={auraHeader}>
         <div>
           <h1 style={logoStyle}>aura <span style={{fontWeight: '300'}}>kitchen</span></h1>
           <p style={subtitle}>active preparation queue</p>
         </div>
-        <Link to="/" style={backBtn}>← portal</Link>
       </header>
       
       <div style={orderGrid}>
@@ -127,19 +125,44 @@ const auraContainer = {
   backgroundColor: "#f1f8f1", 
   minHeight: "100vh", 
   color: "#1b4332", 
-  fontFamily: '"Inter", sans-serif' 
+  fontFamily: '"Inter", sans-serif',
+  position: 'relative', // Necessary for absolute back button
+  display: 'flex',
+  flexDirection: 'column'
+};
+
+const backBtnStyle = {
+  position: 'absolute',
+  top: '30px',
+  left: '40px',
+  zIndex: 100,
+  textDecoration: 'none',
+  color: '#1b4332',
+  fontSize: '0.75rem',
+  fontWeight: '800',
+  textTransform: 'uppercase',
+  letterSpacing: '1px',
+  background: 'rgba(255, 255, 255, 0.5)',
+  backdropFilter: 'blur(10px)',
+  padding: '10px 22px',
+  borderRadius: '50px',
+  border: '1px solid rgba(27, 67, 50, 0.1)',
+  transition: 'all 0.2s ease',
+  display: 'flex',
+  alignItems: 'center',
+  boxShadow: '0 4px 15px rgba(0,0,0,0.02)'
 };
 
 const auraHeader = { 
   display: "flex", 
   justifyContent: "space-between", 
   marginBottom: "3rem", 
+  marginTop: "40px", // Align with back button spacing
   alignItems: 'flex-start' 
 };
 
-const logoStyle = { fontSize: '2.5rem', margin: 0, fontWeight: '800', letterSpacing: '-1px' };
+const logoStyle = { fontSize: '3.5rem', margin: 0, fontWeight: '800', letterSpacing: '-1px' };
 const subtitle = { margin: 0, opacity: 0.6, fontWeight: '700', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '2px' };
-const backBtn = { textDecoration: 'none', color: '#1b4332', fontWeight: '700', border: '1px solid rgba(27,67,50,0.2)', padding: '8px 20px', borderRadius: '50px', fontSize: '0.8rem' };
 
 const orderGrid = { 
   display: "grid", 

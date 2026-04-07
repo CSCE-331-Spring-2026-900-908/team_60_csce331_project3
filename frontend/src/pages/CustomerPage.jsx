@@ -59,7 +59,7 @@ export default function CustomerPage() {
   // --- MODAL LOGIC ---
   function openToppings(item) {
     setPendingItem(item);
-    setSelectedToppings([]); // Reset selections
+    setSelectedToppings([]); 
     setShowToppings(true);
   }
 
@@ -103,10 +103,8 @@ export default function CustomerPage() {
   async function handlePlaceOrder() {
     if (cart.length === 0) return;
     try {
-      // Flatten cart for the backend: each drink and topping becomes its own order item
       const flattenedItems = [];
       cart.forEach(cartItem => {
-        // Add the drink itself multiple times based on quantity
         for(let i=0; i < cartItem.quantity; i++) {
           flattenedItems.push({ menu_item_id: cartItem.menu_item_id, price: cartItem.price });
           cartItem.toppings.forEach(t => {
@@ -127,6 +125,9 @@ export default function CustomerPage() {
 
   return (
     <div style={auraContainer}>
+      {/* 1. Fixed Back Button - Anchored to absolute screen position */}
+      <Link to="/" style={backButtonStyle}>← portal</Link>
+
       {/* Modal: Select Multiple Toppings */}
       {showToppings && (
         <div style={modalOverlay}>
@@ -147,20 +148,21 @@ export default function CustomerPage() {
               })}
             </div>
             <button style={auraAddBtnLarge} onClick={confirmAddToCart}>
-              add to order — ${ (Number(pendingItem.base_price) + selectedToppings.reduce((s,t)=>s+t.price,0)).toFixed(2) }
+              add to order — ${ (Number(pendingItem?.base_price || 0) + selectedToppings.reduce((s,t)=>s+t.price,0)).toFixed(2) }
             </button>
             <button style={{border:'none', background:'none', marginTop:'15px', color:'#64748b', cursor:'pointer'}} onClick={()=>setShowToppings(false)}>cancel</button>
           </div>
         </div>
       )}
 
-      {/* Header */}
+      {/* Header Area */}
       <header style={auraHeader}>
         <div style={headerContent}>
-          <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <Link to="/" style={backButtonStyle}>← portal</Link>
-            <div><h1 style={logoStyle}>aura <span style={{fontWeight:'300'}}>kiosk</span></h1><p style={subtitleStyle}>steeped in nature</p></div>
-      
+          <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+            <div>
+              <h1 style={logoStyle}>aura <span style={{fontWeight:'300'}}>kiosk</span></h1>
+              <p style={subtitleStyle}>steeped in nature</p>
+            </div>
           </div>
           <div style={weatherCapsule}><Weather /></div>
         </div>
@@ -200,7 +202,7 @@ export default function CustomerPage() {
                 </div>
                 <div style={auraQtyControls}>
                   <button style={auraQtyBtn} onClick={() => changeQuantity(item.cartId, -1)}>-</button>
-                  <span>{item.quantity}</span>
+                  <span style={{ minWidth: "15px", textAlign: "center" }}>{item.quantity}</span>
                   <button style={auraQtyBtn} onClick={() => changeQuantity(item.cartId, 1)}>+</button>
                 </div>
               </div>
@@ -218,27 +220,27 @@ export default function CustomerPage() {
   );
 }
 
-// --- STYLES ---
-const auraAddBtnLarge = { width:'100%', padding:'1.2rem', background:'#1b4332', color:'white', border:'none', borderRadius:'50px', fontWeight:'700', cursor:'pointer', fontSize:'1rem' };
-const modalOverlay = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(27, 67, 50, 0.4)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' };
-const auraModal = { background: 'white', padding: '3rem', borderRadius: '40px', width: '500px', maxWidth: '90%', textAlign: 'center' };
-const toppingGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', margin: '2rem 0' };
-const toppingBtn = { padding: '1rem', border: '1px solid #c8e6c9', borderRadius: '20px', cursor: 'pointer', fontWeight: '600' };
-const auraContainer = { backgroundColor: "#e8f5e9", color: "#1e293b", minHeight: "100vh", padding: "2rem" };
-const auraHeader = { marginBottom: "3rem" };
-const headerContent = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1400px', margin: '0 auto' };
+// --- CONSOLIDATED STYLES ---
+const auraContainer = { backgroundColor: "#e8f5e9", color: "#1e293b", minHeight: "100vh", padding: "2rem", position: 'relative' };
+const backButtonStyle = { position: 'absolute', top: '30px', left: '40px', zIndex: 100, textDecoration: 'none', color: '#1b4332', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(10px)', padding: '10px 22px', borderRadius: '50px', border: '1px solid rgba(27, 67, 50, 0.1)', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' };
+const auraHeader = { marginBottom: "3rem", marginTop: "40px" };
+const headerContent = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', maxWidth: '1400px', margin: '0 auto' };
 const logoStyle = { margin: 0, fontSize: "3.5rem", fontWeight: "800", color: "#1b4332" };
 const subtitleStyle = { color: "#2d6a4f", fontWeight: "700", letterSpacing: "4px", textTransform: "uppercase", fontSize: "0.7rem", margin: 0, opacity: 0.6 };
-const backButtonStyle = { color: '#2d6a4f', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(45, 106, 79, 0.2)', padding: '8px 20px', borderRadius: '50px', background: 'rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(5px)', display: 'inline-flex', alignItems: 'center' };
 const weatherCapsule = { background: 'rgba(255, 255, 255, 0.5)', padding: '4px 16px', borderRadius: '50px', border: '1px solid #c8e6c9', backdropFilter: 'blur(5px)' };
+const modalOverlay = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(27, 67, 50, 0.4)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' };
+const auraModal = { background: 'white', padding: '3rem', borderRadius: '40px', width: '500px', maxWidth: '90%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' };
+const toppingGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', margin: '2rem 0' };
+const toppingBtn = { padding: '1rem', border: '1px solid #c8e6c9', borderRadius: '20px', cursor: 'pointer', fontWeight: '600', transition: '0.2s' };
+const auraAddBtnLarge = { width:'100%', padding:'1.2rem', background:'#1b4332', color:'white', border:'none', borderRadius:'50px', fontWeight:'700', cursor:'pointer', fontSize:'1rem' };
 const tabContainer = { display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '3rem', flexWrap: 'wrap' };
 const tabStyle = (isActive) => ({ padding: "8px 20px", borderRadius: "50px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600", border: "1px solid", borderColor: isActive ? "#2d6a4f" : "rgba(45, 106, 79, 0.1)", background: isActive ? "#2d6a4f" : "rgba(255, 255, 255, 0.4)", color: isActive ? "white" : "#2d6a4f", backdropFilter: "blur(5px)" });
 const mainLayout = { display: "grid", gridTemplateColumns: "1fr 320px", gap: "3rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" };
 const menuGrid = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "2rem" };
 const auraItemCard = { background: "rgba(255, 255, 255, 0.6)", backdropFilter: "blur(10px)", borderRadius: "32px", padding: "2rem", border: "1px solid rgba(255, 255, 255, 0.3)", textAlign: 'center' };
 const imageCircle = { height: "100px", width: "100px", backgroundColor: "#f1f8f1", borderRadius: "50%", margin: "0 auto 1.5rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3rem" };
-const itemTitle = { fontSize: '1.25rem', fontWeight: '700', color: '#1b4332' };
-const itemDescription = { fontSize: "0.85rem", color: "#64748b", height: "45px", overflow: "hidden", margin: '0 0 1.5rem 0' };
+const itemTitle = { fontSize: '1.25rem', fontWeight: '700', color: '#1b4332', margin: '0 0 8px 0' };
+const itemDescription = { fontSize: "0.85rem", color: "#64748b", height: "45px", overflow: "hidden", lineHeight: '1.5', margin: '0 0 1.5rem 0' };
 const priceActionRow = { display: "flex", justifyContent: "space-between", alignItems: "center" };
 const priceText = { fontSize: "1.1rem", fontWeight: "700", color: "#2d6a4f" };
 const auraAddBtn = { backgroundColor: "#2d6a4f", color: "white", border: "none", borderRadius: "50px", padding: "0.5rem 1.2rem", cursor: "pointer", fontWeight: "700" };

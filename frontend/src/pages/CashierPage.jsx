@@ -107,9 +107,11 @@ const CashierPage = () => {
 
     return (
         <div style={auraContainer}>
+            {/* Standardized Absolute Back Button - Matches Customer Page exactly */}
+            <Link to="/" style={backBtnStyle}>← portal</Link>
+
             <header style={auraHeader}>
-                <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
-                    <Link to="/" style={backBtn}>← portal</Link>
+                <div style={{ display:'flex', alignItems:'center' }}>
                     <h1 style={logoStyle}>aura <span style={{fontWeight:'300'}}>cashier</span></h1>
                 </div>
             </header>
@@ -192,10 +194,32 @@ const CashierPage = () => {
 };
 
 // --- STYLES ---
-const auraContainer = { background:'#e8f5e9', height:'100vh', padding:'0 20px 20px', fontFamily:'"Inter", sans-serif', color:'#1b4332', display:'flex', flexDirection:'column' };
-const auraHeader = { height:'80px', display:'flex', justifyContent:'space-between', alignItems:'center' };
-const logoStyle = { fontSize:'1.8rem', fontWeight:'800', letterSpacing:'-1px' };
-const backBtn = { textDecoration:'none', color:'#2d6a4f', fontSize:'0.8rem', fontWeight:'700', textTransform:'uppercase', border:'1px solid rgba(45,106,79,0.2)', padding:'6px 15px', borderRadius:'50px' };
+const auraContainer = { background:'#e8f5e9', height:'100vh', padding:'2rem', fontFamily:'"Inter", sans-serif', color:'#1b4332', display:'flex', flexDirection:'column', position: 'relative' };
+const auraHeader = { marginBottom: "3rem", marginTop: "40px" };
+const logoStyle = { fontSize:'3.5rem', fontWeight:'800', letterSpacing:'-1px', margin: 0 };
+
+const backBtnStyle = {
+    position: 'absolute',
+    top: '30px',
+    left: '40px',
+    zIndex: 100,
+    textDecoration: 'none',
+    color: '#1b4332',
+    fontSize: '0.75rem',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    background: 'rgba(255, 255, 255, 0.5)',
+    backdropFilter: 'blur(10px)',
+    padding: '10px 22px',
+    borderRadius: '50px',
+    border: '1px solid rgba(27, 67, 50, 0.1)',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.02)'
+};
+
 const mainLayout = { display:'grid', gridTemplateColumns:'1fr 1fr 400px', gap:'20px', flex:1, overflow:'hidden', paddingBottom:'20px' };
 const glassPanel = { background:'rgba(255,255,255,0.4)', backdropFilter:'blur(10px)', borderRadius:'30px', padding:'25px', border:'1px solid rgba(255,255,255,0.3)', overflowY:'auto' };
 const panelTitle = { fontSize:'0.8rem', textTransform:'uppercase', letterSpacing:'2px', opacity:0.5, marginBottom:'20px' };
