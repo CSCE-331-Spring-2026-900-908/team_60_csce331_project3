@@ -1,118 +1,219 @@
-import React, { useState, useEffect } from 'react';
-import '../App.css'; // Import consistent project-wide styling
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from "react-router-dom";
+import '../App.css'; 
 
 const CashierPage = () => {
-    const [menu, setMenu] = useState([]); // Stores info from db on menu items
-    const [order, setOrder] = useState([]); // Stores current order information
-    const [total, setTotal] = useState(0); // Stores info on price of order
+    const [menu, setMenu] = useState([]); 
+    const [order, setOrder] = useState([]); 
+    const [total, setTotal] = useState(0);
+    const [selectedDrinkIdx, setSelectedDrinkIdx] = useState(null);
 
-    useEffect(() => { //loads menu items on page launch 
-	fetch('http://localhost:8080/api/menu')
-		.then(res => {
-			if(!res.ok) throw new Error("Network could not be communicated with");
-			return res.json();
-		})
-		.then(data => setMenu(data))
-		.catch(err => console.error("Error fetching menu:", err));
+    useEffect(() => { 
+        fetch('http://localhost:8080/api/menu')
+            .then(res => res.json())
+            .then(data => setMenu(data))
+            .catch(err => console.error("Error fetching menu:", err));
     }, []);
 
+    const drinks = useMemo(() => menu.filter(item => item.category?.toLowerCase().trim() !== 'topping'), [menu]);
+    const toppingsOptions = useMemo(() => menu.filter(item => item.category?.toLowerCase().trim() === 'topping'), [menu]);
+
+    // Update the global total whenever the order array changes
+    useEffect(() => {
+        const newTotal = order.reduce((acc, item) => {
+            const drinkBase = parseFloat(item.base_price) * item.quantity;
+            const toppingsSum = item.toppings.reduce((tAcc, t) => tAcc + parseFloat(t.base_price), 0) * item.quantity;
+            return acc + drinkBase + toppingsSum;
+        }, 0);
+        setTotal(newTotal);
+    }, [order]);
+
     const addToOrder = (item) => {
-	setOrder([...order, item]);
-        setTotal(prev => prev + parseFloat(item.base_price)); 
+        const newItem = { 
+            ...item, 
+            order_uid: Date.now() + Math.random(), 
+            toppings: [],
+            quantity: 1
+        };
+        const newOrder = [...order, newItem];
+        setOrder(newOrder);
+        setSelectedDrinkIdx(newOrder.length - 1);
+    };
+
+    const toggleTopping = (topping) => {
+        if (selectedDrinkIdx === null || !order[selectedDrinkIdx]) return;
+        const updatedOrder = [...order];
+        const currentDrink = updatedOrder[selectedDrinkIdx];
+        const existingIdx = currentDrink.toppings.findIndex(t => t.menu_item_id === topping.menu_item_id);
+
+        if (existingIdx > -1) {
+            currentDrink.toppings.splice(existingIdx, 1);
+        } else {
+            currentDrink.toppings.push(topping);
+        }
+        setOrder(updatedOrder);
+    };
+
+    const updateQuantity = (idx, delta) => {
+        const updatedOrder = [...order];
+        const newQty = updatedOrder[idx].quantity + delta;
+        if (newQty > 0) {
+            updatedOrder[idx].quantity = newQty;
+            setOrder(updatedOrder);
+        } else {
+            removeItem(idx);
+        }
+    };
+
+    const removeItem = (idx) => {
+        const updatedOrder = order.filter((_, i) => i !== idx);
+        setOrder(updatedOrder);
+        if (selectedDrinkIdx === idx) setSelectedDrinkIdx(null);
+        else if (selectedDrinkIdx > idx) setSelectedDrinkIdx(selectedDrinkIdx - 1);
     };
 
     const submitOrder = async () => {
+        if (order.length === 0) return;
+        const flattenedItems = [];
+        order.forEach(drink => {
+            for (let i = 0; i < drink.quantity; i++) {
+                flattenedItems.push({ menu_item_id: drink.menu_item_id, price: drink.base_price });
+                drink.toppings.forEach(t => {
+                    flattenedItems.push({ menu_item_id: t.menu_item_id, price: t.base_price });
+                });
+            }
+        });
+
         const orderData = {
-			customer_id: 1, //Placeholder will be expanded upon
-        	employee_id: 1, // Placeholder will be expanded upon
-        	total_amount: total,
-			//loop through items in order
-            items: order.map(item => ({  
-				menu_item_id: item.menu_item_id,
-                quantity: 1,
-                price: item.base_price
-			}))
+            customer_id: 1, 
+            employee_id: 1, 
+            total_amount: parseFloat(total.toFixed(2)),
+            items: flattenedItems
         };
 
-        try{
+        try {
             const response = await fetch('http://localhost:8080/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData)
             });
-            if(response.ok){
-                alert("Order Placed Successfully!");
-            	//reset current order state
-				setOrder([]); //clear current stored order 
-                setTotal(0);  //reset the current stored order total
+            if (response.ok) {
+                alert("Order finalized.");
+                setOrder([]);
+                setSelectedDrinkIdx(null);
             }
-        } catch (err) {
-            console.error("Error submitting order:", err);
-        }
+        } catch (err) { console.error(err); }
     };
 
-    return(
-	<div id="center">
-		<div className="hero">
-			<h1 style={{ color: 'var(--text-h)' }}>Cashier Interface</h1>
-        	<div className="ticks"></div>
-            </div>
+    return (
+        <div style={auraContainer}>
+            <header style={auraHeader}>
+                <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
+                    <Link to="/" style={backBtn}>← portal</Link>
+                    <h1 style={logoStyle}>aura <span style={{fontWeight:'300'}}>cashier</span></h1>
+                </div>
+            </header>
 
-                <div id="next-steps" style={{ width: '100%', maxWidth: '1200px' }}>
-                        <div id="docs">
-                                <h2 className="icon" style={{ width: 'auto' }}>Drink Menu</h2>
-								<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
-                                         {menu?.map(item => (
-											<button 
-                                                 key={item.menu_item_id} 
-                                                 className="counter" 
-                                                 onClick={() => addToOrder(item)}
-                                                 style={{ margin: 0, cursor: 'pointer', textAlign: 'center' }}>
-                                                {item.name}<br/>
-                                                <small>${item.base_price}</small>
-                                        	</button>
-										))}
-                               </div>
-						</div>
+            <div style={mainLayout}>
+                {/* 1. Drinks */}
+                <div style={glassPanel}>
+                    <h2 style={panelTitle}>Beverages</h2>
+                    <div style={grid}>
+                        {drinks.map(item => (
+                            <button key={item.menu_item_id} onClick={() => addToOrder(item)} style={drinkCard}>
+                                {item.name.toLowerCase()}
+                                <div style={cardPrice}>${item.base_price}</div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
-                <div>
-                    <h2>Current Order</h2>
-                    <div style={{ minHeight: '200px', background: 'var(--social-bg)', borderRadius: '8px', padding: '16px', marginTop: '16px', marginTop: '16px' }}>
-				{order.length === 0 ? <p>Order is empty</p> : (
-				<ul style={{ listStyle: 'none', padding: 0 }}>
-                                {order.map((item, idx) => (
-                                    <li key={idx} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)' }}>
-                                        {item.name} - ${item.base_price}
-                                    </li>
+                {/* 2. Toppings */}
+                <div style={glassPanel}>
+                    <h2 style={panelTitle}>Add-ons</h2>
+                    <p style={selectionLabel}>
+                        {selectedDrinkIdx !== null ? `modifying item #${selectedDrinkIdx + 1}` : "select item to customize"}
+                    </p>
+                    <div style={grid}>
+                        {toppingsOptions.map(t => {
+                            const isSelected = order[selectedDrinkIdx]?.toppings.find(st => st.menu_item_id === t.menu_item_id);
+                            return (
+                                <button 
+                                    key={t.menu_item_id} 
+                                    onClick={() => toggleTopping(t)} 
+                                    style={isSelected ? activeToppingCard : toppingCard}
+                                    disabled={selectedDrinkIdx === null}
+                                >
+                                    {t.name.toLowerCase()}
+                                    <div style={{fontSize:'0.7rem', opacity:0.8}}>{isSelected ? "added" : `+$${t.base_price}`}</div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* 3. Basket with Qty & Delete */}
+                <div style={cartPanel}>
+                    <div style={{padding:'20px', flex:1, overflowY:'auto'}}>
+                        <h2 style={{...panelTitle, color:'white'}}>Basket</h2>
+                        {order.map((item, idx) => (
+                            <div 
+                                key={item.order_uid} 
+                                onClick={() => setSelectedDrinkIdx(idx)}
+                                style={idx === selectedDrinkIdx ? activeReceiptItem : receiptItem}
+                            >
+                                <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+                                    <div style={{fontWeight:'700'}}>{item.name.toLowerCase()}</div>
+                                    <button onClick={(e) => { e.stopPropagation(); removeItem(idx); }} style={deleteIcon}>✕</button>
+                                </div>
+                                
+                                {item.toppings.map((t, tIdx) => (
+                                    <div key={tIdx} style={receiptTopping}>+ {t.name.toLowerCase()}</div>
                                 ))}
-                            </ul>
-                        )}
+
+                                <div style={qtyControls}>
+                                    <button onClick={(e) => { e.stopPropagation(); updateQuantity(idx, -1); }} style={qtyBtn}>-</button>
+                                    <span style={{fontWeight:'700', fontSize:'0.9rem'}}>{item.quantity}</span>
+                                    <button onClick={(e) => { e.stopPropagation(); updateQuantity(idx, 1); }} style={qtyBtn}>+</button>
+                                    <span style={{marginLeft:'auto', fontWeight:'700'}}>${((parseFloat(item.base_price) + item.toppings.reduce((acc, t) => acc + parseFloat(t.base_price), 0)) * item.quantity).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                     
-                    <div style={{ marginTop: '24px' }}>
-                        <h3 style={{ marginBottom: '16px' }}>Total: ${total.toFixed(2)}</h3>
-                        <ul style={{ marginTop: 0 }}>
-                            <li style={{ flex: 1 }}>
-                                <a href="#" onClick={(e) => { e.preventDefault(); submitOrder(); }} 
-                                   className="counter"
-                                   style={{ 
-                                       background: 'var(--accent)', 
-                                       color: '#000', 
-                                       fontWeight: 'bold', 
-                                       display: 'block', 
-                                       textAlign: 'center', 
-                                       textDecoration: 'none' 
-                                   }}>
-                                    SUBMIT ORDER
-                                </a>
-                            </li>
-                        </ul>
+                    <div style={checkoutFooter}>
+                        <div style={totalDisplay}><span>${total.toFixed(2)}</span></div>
+                        <button onClick={submitOrder} style={auraSubmitBtn}>FINALIZE ORDER</button>
                     </div>
                 </div>
             </div>
-            <div id="spacer"></div>
         </div>
     );
 };
+
+// --- STYLES ---
+const auraContainer = { background:'#e8f5e9', height:'100vh', padding:'0 20px 20px', fontFamily:'"Inter", sans-serif', color:'#1b4332', display:'flex', flexDirection:'column' };
+const auraHeader = { height:'80px', display:'flex', justifyContent:'space-between', alignItems:'center' };
+const logoStyle = { fontSize:'1.8rem', fontWeight:'800', letterSpacing:'-1px' };
+const backBtn = { textDecoration:'none', color:'#2d6a4f', fontSize:'0.8rem', fontWeight:'700', textTransform:'uppercase', border:'1px solid rgba(45,106,79,0.2)', padding:'6px 15px', borderRadius:'50px' };
+const mainLayout = { display:'grid', gridTemplateColumns:'1fr 1fr 400px', gap:'20px', flex:1, overflow:'hidden', paddingBottom:'20px' };
+const glassPanel = { background:'rgba(255,255,255,0.4)', backdropFilter:'blur(10px)', borderRadius:'30px', padding:'25px', border:'1px solid rgba(255,255,255,0.3)', overflowY:'auto' };
+const panelTitle = { fontSize:'0.8rem', textTransform:'uppercase', letterSpacing:'2px', opacity:0.5, marginBottom:'20px' };
+const grid = { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px, 1fr))', gap:'12px' };
+const drinkCard = { background:'white', border:'none', borderRadius:'20px', padding:'15px', cursor:'pointer', textAlign:'left', fontWeight:'700', color:'#1b4332', boxShadow:'0 4px 6px rgba(0,0,0,0.02)' };
+const toppingCard = { background:'rgba(255,255,255,0.6)', border:'none', borderRadius:'18px', padding:'12px', cursor:'pointer', textAlign:'left', fontWeight:'600', color:'#2d6a4f' };
+const activeToppingCard = { background:'#2d6a4f', border:'none', borderRadius:'18px', padding:'12px', cursor:'pointer', textAlign:'left', fontWeight:'600', color:'white' };
+const cardPrice = { fontSize:'0.75rem', opacity:0.5, marginTop:'4px' };
+const cartPanel = { background:'#1b4332', borderRadius:'35px', display:'flex', flexDirection:'column', color:'white', boxShadow:'0 20px 40px rgba(27,67,50,0.1)' };
+const selectionLabel = { fontSize:'0.75rem', marginBottom:'15px', padding:'8px 12px', background:'rgba(255,255,255,0.2)', borderRadius:'10px', fontWeight:'700' };
+const receiptItem = { padding:'15px', borderRadius:'20px', marginBottom:'10px', cursor:'pointer', background:'rgba(255,255,255,0.05)' };
+const activeReceiptItem = { padding:'15px', borderRadius:'20px', marginBottom:'10px', cursor:'pointer', background:'rgba(255,255,255,0.12)', boxShadow:'inset 0 0 0 2px #52b788' };
+const receiptTopping = { fontSize:'0.7rem', opacity:0.6, paddingLeft:'8px', marginTop:'2px' };
+const deleteIcon = { background:'none', border:'none', color:'rgba(255,255,255,0.3)', cursor:'pointer', fontSize:'1rem' };
+const qtyControls = { display:'flex', alignItems:'center', gap:'12px', marginTop:'12px', paddingTop:'10px', borderTop:'1px solid rgba(255,255,255,0.1)' };
+const qtyBtn = { background:'rgba(255,255,255,0.1)', border:'none', color:'white', width:'24px', height:'24px', borderRadius:'6px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'800' };
+const checkoutFooter = { padding:'25px', background:'rgba(0,0,0,0.15)', borderBottomLeftRadius:'35px', borderBottomRightRadius:'35px' };
+const totalDisplay = { fontSize:'2.2rem', fontWeight:'800', marginBottom:'15px', textAlign:'right' };
+const auraSubmitBtn = { width:'100%', padding:'18px', background:'#52b788', color:'#1b4332', border:'none', borderRadius:'20px', fontWeight:'800', fontSize:'1rem', cursor:'pointer' };
 
 export default CashierPage;

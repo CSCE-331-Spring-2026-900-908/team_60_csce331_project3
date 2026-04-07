@@ -71,7 +71,7 @@ export default function PortalPage() {
           letterSpacing: "-0.05em",
           color: "#1b4332" 
         }}>
-          aura boba
+          aura <span style={{fontWeight:'300'}}>boba</span>
         </h1>
         <p style={{ 
           color: "#2d6a4f", 
