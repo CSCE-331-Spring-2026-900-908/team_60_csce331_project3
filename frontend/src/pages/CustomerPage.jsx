@@ -165,14 +165,18 @@ export default function CustomerPage() {
 
       {/* Header Area */}
       <header style={auraHeader}>
-        <div style={headerContent}>
+      <div style={headerContent}>
           <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
             <div>
               <h1 style={logoStyle}>aura <span style={{fontWeight:'300'}}>kiosk</span></h1>
               <p style={subtitleStyle}>steeped in nature</p>
             </div>
           </div>
-          <div style={weatherCapsule}><Weather /></div>
+          
+          {/* The Corrected Weather Pill */}
+          <div style={weatherCapsule}>
+            <Weather />
+          </div>
         </div>
       </header>
 
@@ -235,7 +239,7 @@ const auraHeader = { marginBottom: "3rem", marginTop: "40px" };
 const headerContent = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', maxWidth: '1400px', margin: '0 auto' };
 const logoStyle = { margin: 0, fontSize: "3.5rem", fontWeight: "800", color: "#1b4332" };
 const subtitleStyle = { color: "#2d6a4f", fontWeight: "700", letterSpacing: "4px", textTransform: "uppercase", fontSize: "0.7rem", margin: 0, opacity: 0.6 };
-const weatherCapsule = { background: 'rgba(255, 255, 255, 0.5)', padding: '4px 16px', borderRadius: '50px', border: '1px solid #c8e6c9', backdropFilter: 'blur(5px)' };
+const weatherCapsule = { background: 'rgba(255, 255, 255, 0.5)', padding: '0px 0px', borderRadius: '50px', border: '1px solid #c8e6c9', backdropFilter: 'blur(5px)' };
 const modalOverlay = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(27, 67, 50, 0.4)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const auraModal = { background: 'white', padding: '3rem', borderRadius: '40px', width: '500px', maxWidth: '90%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' };
 const toppingGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', margin: '2rem 0' };
