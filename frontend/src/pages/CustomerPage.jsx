@@ -196,6 +196,28 @@ export default function CustomerPage() {
       </div>
 
       <div style={mainLayout}>
+	{activeCategory === "recommended" && weatherTemp !== null && (
+	  <div style = {{ gridColumn: "1/ -1", textAlign: "center", marginBottom: "1rem" }}>
+	    <span style ={{
+		background: weatherTemp >= 70 ? "#e0f2fe" : "#fce7f3",
+		color: weatherTemp >= 70 ? "#0369a1" : "#9d174d",
+		padding: "8px 24px",
+		borderRadius: "50px",
+		fontWeight: "700",
+		fontSize: "0.9rem"
+	    }}>
+		{weatherTemp >= 70
+		 ? `🧊 ${weatherTemp}°F outside — perfect for something cold!` 
+                 : `☕ ${weatherTemp}°F outside — time to warm up!`}
+	   </span>
+	</div>
+      )}
+
+
+
+
+
+
         <section style={menuGrid}>
           {filteredItems.map((item) => (
             <div key={item.menu_item_id} style={auraItemCard}>
