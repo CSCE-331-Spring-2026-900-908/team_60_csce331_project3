@@ -2,8 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from "react-router-dom";
 import '../App.css'; 
 
-
-
 const CashierPage = () => {
     const [menu, setMenu] = useState([]); 
     const [order, setOrder] = useState([]); 
