@@ -6,7 +6,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT menu_item_id, name, category, base_price, description
+      SELECT menu_item_id, name, category, base_price, description, temperature
       FROM public.menuitems
       WHERE LOWER(name) NOT LIKE '%test%'
         AND LOWER(description) NOT LIKE '%test%'

@@ -21,6 +21,7 @@ export default function CustomerPage() {
   const [showToppings, setShowToppings] = useState(false);
   const [pendingItem, setPendingItem] = useState(null);
   const [selectedToppings, setSelectedToppings] = useState([]);
+  const [weatherTemp, setWeatherTemp] = useState(null); //used for weather based recommendations
 
   useEffect(() => {
     async function loadMenu() {
@@ -35,6 +36,15 @@ export default function CustomerPage() {
     loadMenu();
   }, []);
 
+  useEffect(() => {
+    fetch("http://localhost:8080/api/weather")
+	.then(res => res.json())
+	.then(data => setWeatherTemp(data.temp))
+	.catch(err => console.error("Weather fetch failed:", err));
+
+  }, []);
+
+
   const getCleanCat = (item) => item.category ? item.category.toString().trim().toLowerCase() : "";
 
   const toppingsOptions = useMemo(() => 
@@ -43,14 +53,25 @@ export default function CustomerPage() {
 
   const categories = useMemo(() => {
     const rawCats = [...new Set(menuItems.map(item => getCleanCat(item)))];
-    return ["all", ...rawCats.filter(c => c !== 'topping' && c !== "")];
+    return ["all", "recommended",  ...rawCats.filter(c => c !== 'topping' && c !== "")];
   }, [menuItems]);
 
   const filteredItems = useMemo(() => {
     const drinks = menuItems.filter(item => getCleanCat(item) !== 'topping');
     if (activeCategory === "all") return drinks;
+    if(activeCategory == "recommended"){ //weather based recommendations tab
+	if(weatherTemp == null) return drinks; //incase not working
+	let tempRec;
+	const tempInflectionPt = 70; //can adjust this later
+	if(weatherTemp < tempInflectionPt){
+	    tempRec = "H"; //for cold temp recommend hot drinks
+	}else {
+	    tempRec = "C" //hot temp rec cold drinks
+	}
+	return drinks.filter(item => item.temperature  === tempRec);
+    } 
     return drinks.filter(item => getCleanCat(item) === activeCategory);
-  }, [menuItems, activeCategory]);
+  }, [menuItems, activeCategory, weatherTemp]);
 
   // Total Quantity logic
   const totalItemsCount = useMemo(() => 
@@ -189,6 +210,28 @@ export default function CustomerPage() {
       </div>
 
       <div style={mainLayout}>
+	{activeCategory === "recommended" && weatherTemp !== null && (
+	  <div style = {{ gridColumn: "1/ -1", textAlign: "center", marginBottom: "1rem" }}>
+	    <span style ={{
+		background: weatherTemp >= 70 ? "#e0f2fe" : "#fce7f3",
+		color: weatherTemp >= 70 ? "#0369a1" : "#9d174d",
+		padding: "8px 24px",
+		borderRadius: "50px",
+		fontWeight: "700",
+		fontSize: "0.9rem"
+	    }}>
+		{weatherTemp >= 70
+		 ? `🧊 ${weatherTemp}°F outside — perfect for something cold!` 
+                 : `☕ ${weatherTemp}°F outside — time to warm up!`}
+	   </span>
+	</div>
+      )}
+
+
+
+
+
+
         <section style={menuGrid}>
           {filteredItems.map((item) => (
             <div key={item.menu_item_id} style={auraItemCard}>
