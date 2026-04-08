@@ -6,35 +6,50 @@ import KitchenPage from "./pages/KitchenPage";
 import MenuBoardPage from "./pages/MenuBoardPage";
 import CashierPage from "./pages/CashierPage";
 
+/**
+ * Modernized Manager Dashboard Placeholder
+ * Uses CSS variables from index.css for a bright aesthetic.
+ */
 function AdminPlaceholder() {
   return (
     <div style={{ 
       padding: "4rem", 
-      fontFamily: "Arial, sans-serif", 
-      backgroundColor: "#16171d", 
-      color: "white", 
+      fontFamily: "var(--sans)", 
+      backgroundColor: "var(--bg)", 
+      color: "var(--text)", 
       minHeight: "100vh",
       textAlign: "center"
     }}>
-      <h1 style={{ fontSize: "3rem", marginBottom: "2rem" }}>Manager Dashboard</h1>
+      <h1 style={{ fontSize: "3rem", marginBottom: "2rem", color: "var(--text-h)" }}>
+        Manager Dashboard
+      </h1>
       
-      <div style={{ background: "#1f2028", padding: "2rem", borderRadius: "15px", maxWidth: "1000px", margin: "0 auto" }}>
+      <div style={{ 
+        background: "white", 
+        padding: "2rem", 
+        borderRadius: "20px", 
+        maxWidth: "1000px", 
+        margin: "0 auto",
+        border: "1px solid var(--border)",
+        boxShadow: "var(--shadow)" 
+      }}>
         <ManagerStats /> 
       </div>
 
-      <div style={{ marginTop: "3rem", borderTop: "1px solid #2e303a", paddingTop: "2rem" }}>
-        <p style={{ color: "#9ca3af" }}>Advanced Inventory and Employee tools coming soon.</p>
+      <div style={{ marginTop: "3rem", borderTop: "1px solid var(--border)", paddingTop: "2rem" }}>
+        <p style={{ color: "#64748b" }}>Advanced Inventory and Employee tools coming soon.</p>
         <Link to="/">
           <button style={{ 
             marginTop: "2rem", 
             padding: "1rem 2.5rem", 
-            backgroundColor: "#aa3bff", 
+            backgroundColor: "var(--accent)", 
             color: "white", 
             border: "none", 
             borderRadius: "12px",
             cursor: "pointer",
             fontWeight: "bold",
-            fontSize: "1.1rem"
+            fontSize: "1.1rem",
+            transition: "all 0.2s ease"
           }}>
             ← Back to Portal
           </button>
@@ -44,6 +59,10 @@ function AdminPlaceholder() {
   );
 }
 
+/**
+ * Main Application Component
+ * Handles routing for the POS system.
+ */
 export default function App() {
   return (
     <BrowserRouter>

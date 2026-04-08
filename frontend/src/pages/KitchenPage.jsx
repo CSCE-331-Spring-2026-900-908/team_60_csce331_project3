@@ -5,13 +5,25 @@ import { Link } from "react-router-dom";
 export default function KitchenPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const logoStyle = { 
+        fontSize: '3.5rem', 
+        fontWeight: '800', // This makes "aura" thick
+        letterSpacing: '-1px', 
+        margin: 0,
+        color: '#1b4332',
+        textTransform: 'lowercase' 
+    };
 
   const loadOrders = async () => {
     try {
       const data = await fetchOrders();
-      setOrders(data.filter(o => o.status === "pending").sort((a, b) => a.order_id - b.order_id));
+      // Only show pending orders, sorted by oldest first
+      const pending = data
+        .filter(o => o.status?.toLowerCase() === "pending")
+        .sort((a, b) => a.order_id - b.order_id);
+      setOrders(pending);
     } catch (err) {
-      console.error(err);
+      console.error("Kitchen fetch error:", err);
     } finally {
       setLoading(false);
     }
@@ -19,7 +31,7 @@ export default function KitchenPage() {
 
   useEffect(() => {
     loadOrders();
-    const interval = setInterval(loadOrders, 5000);
+    const interval = setInterval(loadOrders, 5000); // Polling every 5s
     return () => clearInterval(interval);
   }, []);
 
@@ -33,56 +45,203 @@ export default function KitchenPage() {
     }
   };
 
-  if (loading) return <div style={{color: 'white', textAlign: 'center', marginTop: '5rem'}}>Loading Kitchen...</div>;
+  /**
+   * Helper: Grouping Logic
+   */
+  const groupOrderItems = (items) => {
+    if (!items) return [];
+    const grouped = [];
+    let currentDrink = null;
+
+    items.forEach(item => {
+      const isTopping = item.category?.toLowerCase().trim() === 'topping' || 
+                        item.name?.toLowerCase().includes('topping');
+
+      if (!isTopping) {
+        currentDrink = { ...item, toppings: [] };
+        grouped.push(currentDrink);
+      } else if (currentDrink) {
+        currentDrink.toppings.push(item);
+      } else {
+        grouped.push({ ...item, toppings: [] });
+      }
+    });
+    return grouped;
+  };
+
+  if (loading) return <div style={loadingScreen}>preparing aura kitchen...</div>;
 
   return (
-    <div style={{ padding: "2rem", backgroundColor: "#16171d", minHeight: "100vh", color: "white", fontFamily: 'sans-serif' }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "2rem", alignItems: 'center' }}>
-        <h1 style={{fontSize: '2.5rem', margin: 0, fontWeight: 'bold'}}>Kitchen Queue</h1>
-        <Link to="/"><button style={{padding: '8px 16px', cursor: 'pointer', background: '#555', color: 'white', border: 'none', borderRadius: '4px'}}>Portal</button></Link>
-      </div>
-      
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "2rem" }}>
-        {orders.length === 0 ? (
-          <p style={{color: '#9ca3af'}}>No active orders.</p>
-        ) : (
-          orders.map(order => (
-            <div key={order.order_id} style={{ border: "2px solid #aa3bff", borderRadius: "20px", background: "#1f2028", padding: "1.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #2e303a", paddingBottom: "10px" }}>
-                <h2 style={{ margin: 0, fontSize: '1.8rem' }}>Order #{order.order_id}</h2>
-                <span style={{ color: "#aa3bff", fontWeight: "bold" }}>{order.order_time}</span>
-              </div>
+    <div style={auraContainer}>
+      {/* Standardized Absolute Back Button - Anchored to screen */}
+      <Link to="/" style={backBtnStyle}>← portal</Link>
 
-              <div style={{ margin: "20px 0", textAlign: 'center' }}>
-                <p style={{ color: "#9ca3af", fontSize: "0.8rem", margin: '0' }}>ORDER TOTAL</p>
-                <h3 style={{ fontSize: "2.5rem", margin: '5px 0' }}>${Number(order.total_amount).toFixed(2)}</h3>
-                
-                {/* ITEMS SECTION */}
-                <div style={{ background: "#16171d", padding: "15px", borderRadius: "10px", marginTop: "15px", textAlign: 'left', border: '1px solid #2e303a' }}>
-                   <p style={{ fontSize: "0.75rem", color: "#aa3bff", margin: "0 0 10px 0", fontWeight: "bold", textAlign: 'center' }}>ITEMS TO PREPARE:</p>
-                   <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                    {order.items && order.items.length > 0 ? (
-                      order.items.map((item, idx) => (
-                        <li key={idx} style={{ fontSize: "1.3rem", marginBottom: "6px" }}>
-                          <span style={{ color: "#aa3bff", fontWeight: "bold" }}>{item.quantity}x</span> {item.name}
-                        </li>
-                      ))
-                    ) : (
-                      <li style={{ color: "#555", fontStyle: "italic", textAlign: "center" }}>No items found</li>
-                    )}
-                   </ul>
+      <header style={auraHeader}>
+        <div>
+          <h1 style={logoStyle}>aura <span style={{fontWeight: '300'}}>kitchen</span></h1>
+          <p style={subtitle}>active preparation queue</p>
+        </div>
+      </header>
+      
+      <div style={orderGrid}>
+        {orders.length === 0 ? (
+          <div style={emptyState}>no pending orders. everything is steeped to perfection.</div>
+        ) : (
+          orders.map(order => {
+            const groupedItems = groupOrderItems(order.items);
+            return (
+              <div key={order.order_id} style={orderCard}>
+                <div style={cardHeader}>
+                  <div style={orderBadge}>#{order.order_id}</div>
+                  <span style={timeText}>{new Date(order.order_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                 </div>
 
-                <p style={{ color: "#2ecc71", marginTop: '15px' }}>● Status: {order.status}</p>
-              </div>
+                <div style={itemsArea}>
+                  {groupedItems.map((drink, idx) => (
+                    <div key={idx} style={drinkRow}>
+                      <div style={drinkName}>
+                        <span style={qtyMark}>1x</span> {drink.name.toLowerCase()}
+                      </div>
+                      {drink.toppings.length > 0 && (
+                        <div style={toppingList}>
+                          {drink.toppings.map((t, tIdx) => (
+                            <div key={tIdx} style={toppingItem}>+ {t.name.toLowerCase()}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
-              <button onClick={() => handleComplete(order.order_id)} style={{ width: "100%", padding: "18px", backgroundColor: "#2ecc71", border: "none", borderRadius: "12px", color: "white", fontWeight: "bold", cursor: "pointer", fontSize: '1.2rem' }}>
-                MARK AS READY
-              </button>
-            </div>
-          ))
+                <div style={footer}>
+                   <button onClick={() => handleComplete(order.order_id)} style={completeBtn}>
+                    MARK AS READY
+                  </button>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
     </div>
   );
 }
+
+// --- AURA KITCHEN STYLES ---
+const auraContainer = { 
+  padding: "2rem", 
+  backgroundColor: "#f1f8f1", 
+  minHeight: "100vh", 
+  color: "#1b4332", 
+  fontFamily: '"Inter", sans-serif',
+  position: 'relative', // Necessary for absolute back button
+  display: 'flex',
+  flexDirection: 'column'
+};
+
+const backBtnStyle = {
+  position: 'absolute',
+  top: '30px',
+  left: '40px',
+  zIndex: 100,
+  textDecoration: 'none',
+  color: '#1b4332',
+  fontSize: '0.75rem',
+  fontWeight: '800',
+  textTransform: 'uppercase',
+  letterSpacing: '1px',
+  background: 'rgba(255, 255, 255, 0.5)',
+  backdropFilter: 'blur(10px)',
+  padding: '10px 22px',
+  borderRadius: '50px',
+  border: '1px solid rgba(27, 67, 50, 0.1)',
+  transition: 'all 0.2s ease',
+  display: 'flex',
+  alignItems: 'center',
+  boxShadow: '0 4px 15px rgba(0,0,0,0.02)'
+};
+
+const auraHeader = { 
+  display: "flex", 
+  justifyContent: "space-between", 
+  marginBottom: "3rem", 
+  marginTop: "40px", // Align with back button spacing
+  alignItems: 'flex-start' 
+};
+
+const logoStyle = { fontSize: '3.5rem', margin: 0, fontWeight: '800', letterSpacing: '-1px' };
+const subtitle = { margin: 0, opacity: 0.6, fontWeight: '700', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '2px' };
+
+const orderGrid = { 
+  display: "grid", 
+  gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", 
+  gap: "2rem" 
+};
+
+const orderCard = { 
+  background: "white", 
+  borderRadius: "30px", 
+  padding: "1.5rem", 
+  display: 'flex', 
+  flexDirection: 'column',
+  boxShadow: '0 10px 30px rgba(27,67,50,0.05)',
+  border: '1px solid rgba(27,67,50,0.05)'
+};
+
+const cardHeader = { 
+  display: "flex", 
+  justifyContent: "space-between", 
+  alignItems: 'center',
+  marginBottom: '1.5rem'
+};
+
+const orderBadge = { 
+  background: '#1b4332', 
+  color: 'white', 
+  padding: '5px 15px', 
+  borderRadius: '50px', 
+  fontWeight: '800' 
+};
+
+const timeText = { opacity: 0.5, fontWeight: '700', fontSize: '0.9rem' };
+
+const itemsArea = { flex: 1, marginBottom: '2rem' };
+
+const drinkRow = { 
+  marginBottom: '1.2rem', 
+  paddingBottom: '1rem', 
+  borderBottom: '1px solid #f1f8f1' 
+};
+
+const drinkName = { fontSize: '1.2rem', fontWeight: '700', color: '#1b4332' };
+const qtyMark = { color: '#52b788', marginRight: '8px' };
+
+const toppingList = { 
+  marginTop: '5px', 
+  paddingLeft: '32px' 
+};
+
+const toppingItem = { 
+  fontSize: '0.9rem', 
+  color: '#2d6a4f', 
+  opacity: 0.8,
+  fontStyle: 'italic'
+};
+
+const footer = { marginTop: 'auto' };
+
+const completeBtn = { 
+  width: "100%", 
+  padding: "1.2rem", 
+  backgroundColor: "#52b788", 
+  border: "none", 
+  borderRadius: "20px", 
+  color: "#1b4332", 
+  fontWeight: "800", 
+  cursor: "pointer", 
+  fontSize: '1rem',
+  transition: 'transform 0.2s'
+};
+
+const loadingScreen = { background: '#f1f8f1', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1b4332', fontWeight: '700' };
+const emptyState = { gridColumn: '1/-1', textAlign: 'center', opacity: 0.5, marginTop: '4rem', fontWeight: '600' };

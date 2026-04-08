@@ -8,8 +8,7 @@ router.get("/", async (req, res) => {
     const result = await pool.query(`
       SELECT menu_item_id, name, category, base_price, description
       FROM public.menuitems
-      WHERE category <> 'topping'
-        AND LOWER(name) NOT LIKE '%test%'
+      WHERE LOWER(name) NOT LIKE '%test%'
         AND LOWER(description) NOT LIKE '%test%'
       ORDER BY category, name
     `);
