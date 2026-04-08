@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import Weather from "../components/Weather";
-import ChatBot from "../components/ChatBot";
 
 export default function PortalPage() {
   const cardStyle = {
@@ -113,7 +112,6 @@ export default function PortalPage() {
         </Link>
 
       </div>
-      <ChatBot />
     </div>
   );
 }

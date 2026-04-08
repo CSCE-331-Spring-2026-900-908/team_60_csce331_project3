@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchMenu, placeOrder } from "../services/api";
-import Weather from '../components/Weather'; // Added Weather import
+import Weather from '../components/Weather'; 
+import ChatBot from "../components/ChatBot"; 
 
 export default function CustomerPage() {
   const [menuItems, setMenuItems] = useState([]);
@@ -85,7 +86,7 @@ export default function CustomerPage() {
                 <h1 style={{ margin: 0, fontSize: "2.5rem", fontWeight: "900" }}>BOBA SHOP</h1>
                 <p style={{ color: "#aa3bff", fontWeight: "bold", letterSpacing: "2px", margin: 0 }}>SELECT YOUR DRINK</p>
             </div>
-            <Weather /> {/* Weather added to header */}
+            <Weather /> 
         </div>
       </header>
 
@@ -162,11 +163,14 @@ export default function CustomerPage() {
           )}
         </aside>
       </div>
+
+      {/* --- REVEILLE BOT ADDED HERE --- */}
+      <ChatBot />
     </div>
   );
 }
 
-// --- STYLES (Kept existing styles for consistency) ---
+// --- STYLES ---
 
 const pageContainer = {
   backgroundColor: "#16171d",
