@@ -20,6 +20,8 @@ export default function CustomerPage() {
   const [gachaRolls, setGachaRolls] = useState(3);
   const [gachaSpinning, setGachaSpinning] = useState(false);
 
+  const tempInflectionPoint = 60; //temperature recommendation breakpoint
+
   useEffect(() => {
     async function loadMenu() {
       try {
@@ -57,15 +59,17 @@ export default function CustomerPage() {
   const filteredItems = useMemo(() => {
     const drinks = menuItems.filter(item => getCleanCat(item) !== 'topping');
     if (activeCategory === "all") return drinks;
-    
-    // Exact restoration of Recommended logic
-    if (activeCategory === "recommended") {
-      if (weatherTemp == null) return drinks;
-      const tempInflectionPt = 70;
-      const tempRec = weatherTemp < tempInflectionPt ? "H" : "C";
-      return drinks.filter(item => item.temperature === tempRec);
-    }
+    if(activeCategory == "recommended"){ //weather based recommendations tab
+	if(weatherTemp == null) return drinks; //incase not working
+	let tempRec;
 
+	if(weatherTemp < tempInflectionPoint){
+	    tempRec = "H"; //for cold temp recommend hot drinks
+	}else {
+	    tempRec = "C" //hot temp rec cold drinks
+	}
+	return drinks.filter(item => item.temperature  === tempRec);
+    } 
     return drinks.filter(item => getCleanCat(item) === activeCategory);
   }, [menuItems, activeCategory, weatherTemp]);
 
@@ -213,24 +217,22 @@ export default function CustomerPage() {
       </div>
 
       <div style={mainLayout}>
-        {/* Exact restoration of Recommended Banner logic */}
-        {activeCategory === "recommended" && weatherTemp !== null && (
-          <div style={{ gridColumn: "1 / -1", textAlign: "center", marginBottom: "2rem" }}>
-            <span style={{
-              background: weatherTemp >= 70 ? "#e0f2fe" : "#fce7f3",
-              color: weatherTemp >= 70 ? "#0369a1" : "#9d174d",
-              padding: "10px 30px",
-              borderRadius: "50px",
-              fontWeight: "800",
-              fontSize: "0.95rem",
-              boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-            }}>
-              {weatherTemp >= 70
-               ? `🧊 ${weatherTemp}°F outside — perfect for something cold!` 
-               : `☕ ${weatherTemp}°F outside — time to warm up!`}
-            </span>
-          </div>
-        )}
+	{activeCategory === "recommended" && weatherTemp !== null && (
+	  <div style = {{ gridColumn: "1/ -1", textAlign: "center", marginBottom: "1rem" }}>
+	    <span style ={{
+		background: weatherTemp >= 70 ? "#e0f2fe" : "#fce7f3",
+		color: weatherTemp >= 70 ? "#0369a1" : "#9d174d",
+		padding: "8px 24px",
+		borderRadius: "50px",
+		fontWeight: "700",
+		fontSize: "0.9rem"
+	    }}>
+		{weatherTemp >= tempInflectionPoint
+		 ? `It's ${weatherTemp}°F outside - perfect weather for something cold 🧊`
+                 : `It's ${weatherTemp}°F outside - time to get something to warm up ☕! `}
+	   </span>
+	</div>
+      )}
 
         {activeCategory === "surprise me" ? (
           <section style={gachaContainer}>
