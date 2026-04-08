@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 export async function fetchMenu() {
   const response = await fetch(`${API_BASE}/menu`);
@@ -36,10 +36,15 @@ export async function placeOrder(orderData) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(orderData),
   });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to place order in database");
+  }
+  
   return response.json();
 }
 
-// Complete an order (changes status from 'pending' to 'completed')
 export async function updateOrderStatus(orderId, status) {
   const response = await fetch(`${API_BASE}/orders/${orderId}`, {
     method: "PUT",
@@ -52,13 +57,14 @@ export async function updateOrderStatus(orderId, status) {
 }
 
 export async function fetchProductUsage(startDate, endDate) {
-  // Use the same API_BASE constant to stay consistent
-  const response = await fetch(`${API_BASE}/manager/product-usage?startDate=${startDate}&endDate=${endDate}`);
-  
+  const response = await fetch(
+    `${API_BASE}/manager/product-usage?startDate=${startDate}&endDate=${endDate}`
+  );
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to fetch usage data");
   }
-  
+
   return response.json();
 }
