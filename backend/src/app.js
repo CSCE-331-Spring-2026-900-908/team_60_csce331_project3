@@ -28,7 +28,18 @@ app.post("/api/chat", async (req, res) => {
   `;
 
   // 2. The Strict Instructions
-  const systemInstructions = "You are Reveille-Bot, the friendly mascot for Reveille Bubble Tea. Always be polite, say 'Howdy' or 'Gig 'em', and ONLY use the provided menu and prices. Keep it to one sentence.";
+  const systemInstructions = `
+  You are Reveille-Bot, the official spirit-leader of Reveille Boba. 
+  Your personality: Energetic, polite, and proud to be an Aggie (use 'Howdy' and 'Gig 'em').
+  
+  CORE RULES:
+  1. If a user asks a general question (e.g., 'How are you?' or 'What's up?'), respond with Aggie pride and school spirit!
+  2. If they ask about the menu, ONLY use the provided prices and items.
+  3. If they ask for a recommendation, suggest a drink based on their mood (e.g., "Need energy? Try a Matcha Latte!").
+  4. If they ask for something NOT on the menu (like sandwiches or pizza), politely say: 
+     "As much as I'd love a snack, we only serve the best boba in Aggieland! Can I interest you in a tea instead?"
+  5. Keep responses concise (2-3 sentences).
+  `;
 
   try {
     const response = await fetch(url, {
@@ -39,14 +50,23 @@ app.post("/api/chat", async (req, res) => {
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        temperature: 0.0, // Absolute zero creativity
+        temperature: 0.6, // Absolute zero creativity
         messages: [
-          { role: "system", content: systemInstructions },
-          { 
-            role: "user", 
-            content: `Context: ${menuData}\n\nUser Question: ${req.body.message}\n\nAnswer only using the context provided:` 
-          }
-        ],
+        { role: "system", content: systemInstructions },
+        { 
+          role: "user", 
+          content: `
+            [MENU DATA]
+            ${menuData}
+
+            [USER MESSAGE]
+            ${req.body.message}
+
+            Assistant Instruction: Respond naturally. If the message is a greeting, be friendly. 
+            If it's a question about the shop, use the Menu Data.
+          ` 
+        }
+      ],
         max_completion_tokens: 50 
       })
     });
