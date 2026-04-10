@@ -5,6 +5,7 @@ import ManagerStats from "./components/ManagerStats";
 import KitchenPage from "./pages/KitchenPage";
 import MenuBoardPage from "./pages/MenuBoardPage";
 import CashierPage from "./pages/CashierPage";
+import ManagerDashboard from "./components/ManagerDashboard";
 
 // 1. Import your new protection component
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -80,7 +81,7 @@ export default function App() {
           path="/manager" 
           element={
             <ProtectedRoute requiredRole="manager">
-              <AdminPlaceholder />
+              <ManagerDashboard />
             </ProtectedRoute>
           } 
         /> 
