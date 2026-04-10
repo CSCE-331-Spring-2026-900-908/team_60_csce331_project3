@@ -9,9 +9,11 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@react-oauth/google": "^0.13.5",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "google-auth-library": "^10.6.2",
     "nodemon": "^3.1.14",
     "pg": "^8.20.0"
   }

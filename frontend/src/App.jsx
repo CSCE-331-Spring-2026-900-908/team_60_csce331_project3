@@ -6,6 +6,9 @@ import KitchenPage from "./pages/KitchenPage";
 import MenuBoardPage from "./pages/MenuBoardPage";
 import CashierPage from "./pages/CashierPage";
 
+// 1. Import your new protection component
+import ProtectedRoute from "./components/ProtectedRoute";
+
 /**
  * Modernized Manager Dashboard Placeholder
  * Uses CSS variables from index.css for a bright aesthetic.
@@ -67,12 +70,40 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Publicly accessible routes */}
         <Route path="/" element={<PortalPage />} />
         <Route path="/customer" element={<CustomerPage />} />
-        <Route path="/manager" element={<AdminPlaceholder />} /> 
-        <Route path="/kitchen" element={<KitchenPage />} />
         <Route path="/menuboard" element={<MenuBoardPage />} />
-        <Route path="/cashierpage" element={<CashierPage />} /> 
+
+        {/* 2. Protected Manager/Kitchen routes */}
+        <Route 
+          path="/manager" 
+          element={
+            <ProtectedRoute requiredRole="manager">
+              <AdminPlaceholder />
+            </ProtectedRoute>
+          } 
+        /> 
+        
+        <Route 
+          path="/kitchen" 
+          element={
+            <ProtectedRoute requiredRole="manager">
+              <KitchenPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* 3. Protected Cashier route */}
+        <Route 
+          path="/cashierpage" 
+          element={
+            <ProtectedRoute requiredRole="cashier">
+              <CashierPage />
+            </ProtectedRoute>
+          } 
+        /> 
+        
       </Routes>
     </BrowserRouter>
   );
