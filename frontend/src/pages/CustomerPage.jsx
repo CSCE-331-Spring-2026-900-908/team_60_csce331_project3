@@ -204,8 +204,10 @@ export default function CustomerPage() {
             <h1 style={logoStyle}>aura <span style={{fontWeight:'300'}}>kiosk</span></h1>
             <p style={subtitleStyle}>steeped in nature</p>
           </div>
-          <div style={weatherCapsule}><Weather /></div>
-        </div>
+	  
+            <div style={weatherCapsule}><Weather /></div>
+        
+	</div>
       </header>
 
       {message && <div style={auraNotification}>{message}</div>}
