@@ -38,9 +38,10 @@ const drinkImageMap = {
 function getDrinkImage(item) {
   return (
     drinkImageMap[item.name?.toLowerCase()] ||
-    "/images/drinks/default-boba.jpg"
+    "/images/drinks/thai-milk-tea.jpg"
   );
 }
+
 
 export default function CustomerPage() {
   // --- Main state ---
@@ -365,7 +366,10 @@ export default function CustomerPage() {
                     src={getDrinkImage(item)}
                     alt={item.name}
                     style={drinkImageStyle}
-                    />
+                    onError={(e) => {
+                    e.currentTarget.src = "/images/drinks/thai-milk-tea.jpg";
+                    }}
+                  />
                 </div>
                 <h3 style={itemTitle}>{item.name.toLowerCase()}</h3>
                 <p style={itemDescription}>{item.description}</p>
