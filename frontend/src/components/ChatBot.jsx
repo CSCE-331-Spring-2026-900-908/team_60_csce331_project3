@@ -1,36 +1,61 @@
 import React, { useState, useEffect, useRef } from "react";
 
+// --- CONFIGURATION ---
+// IMPORTANT: Replace the URL below with your actual Render Backend URL!
+const API_URL = window.location.hostname === "localhost" 
+  ? "http://localhost:8080/api/chat" 
+  : "https://dummy-project3-1.onrender.com/api/chat"; 
+
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([{ role: "bot", text: "Howdy! I'm your Aura Guide. Looking for a drink recommendation?" }]);
+  const [messages, setMessages] = useState([
+    { role: "bot", text: "Howdy! I'm your Aura Guide. Looking for a drink recommendation?" }
+  ]);
   const chatEndRef = useRef(null);
 
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = async () => {
+  const sendMessage = async (e) => {
+    if (e) e.preventDefault(); // Prevents page reload on form submit
     if (!input.trim()) return;
-    const userMsg = { role: "user", text: input };
-    setMessages(prev => [...prev, userMsg]);
+
+    // 1. Capture the input and clear the text box immediately for UI responsiveness
+    const currentInput = input;
+    const userMsg = { role: "user", text: currentInput };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
     try {
-      const res = await fetch("https://dummy-project3-1.onrender.com/api/chat", {
+      // 2. Log for debugging in Browser Console (F12)
+      console.log("🚀 Sending request to:", API_URL);
+
+      const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: currentInput }), // Send the captured input
       });
-      
+
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+
       const data = await res.json();
+      console.log("✅ Server Response:", data);
+
+      // 3. Update chat with AI response
       if (data.reply) {
-        setMessages(prev => [...prev, { role: "bot", text: data.reply }]);
+        setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
       } else {
-        throw new Error("No reply");
+        throw new Error("Empty reply from server");
       }
     } catch (err) {
-      setMessages(prev => [...prev, { role: "bot", text: "I'm having trouble connecting to the tea leaves. Is the backend running?" }]);
+      console.error("❌ Chat Connection Error:", err);
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", text: "I'm having trouble connecting to the tea leaves. Is the backend running?" }
+      ]);
     }
   };
 
@@ -70,17 +95,16 @@ const ChatBot = () => {
             <div ref={chatEndRef} />
           </div>
 
-          {/* Input Area */}
-          <div style={inputArea}>
+          {/* Input Area (Wrapped in a form for better Enter-key support) */}
+          <form onSubmit={sendMessage} style={inputArea}>
             <input 
               value={input} 
               onChange={(e) => setInput(e.target.value)} 
-              onKeyPress={(e) => e.key === "Enter" && sendMessage()} 
               style={textInput} 
               placeholder="Ask about flavors..." 
             />
-            <button onClick={sendMessage} style={sendBtn}>→</button>
-          </div>
+            <button type="submit" style={sendBtn}>→</button>
+          </form>
         </div>
       ) : (
         /* Floating Toggle Button */
@@ -97,7 +121,7 @@ const ChatBot = () => {
 const chatWindow = {
   width: "350px",
   height: "500px",
-  background: "rgba(232, 245, 233, 0.95)", // Mint glass
+  background: "rgba(232, 245, 233, 0.95)",
   backdropFilter: "blur(15px)",
   border: "1px solid rgba(255, 255, 255, 0.5)",
   borderRadius: "30px",
