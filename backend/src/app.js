@@ -84,6 +84,7 @@ app.get("/api/weather", async (req, res) => {
 const buildPath = path.join(__dirname, "../../frontend/dist");
 app.use(express.static(buildPath));
 
+<<<<<<< HEAD
 // Handle React routing, return all non-API requests to index.html
 app.get(/^(?!\/api).+/, (req, res) => {
     res.sendFile(path.join(buildPath, "index.html"));
@@ -99,3 +100,6 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 export default app;
+=======
+export default app;
+>>>>>>> d4b4c86 (debug)
