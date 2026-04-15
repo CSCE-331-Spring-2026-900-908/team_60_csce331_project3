@@ -119,8 +119,3 @@ app.post("/api/employees", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
-// 6. Start the server
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Aura Backend running on port ${PORT}`);
-});

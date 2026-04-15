@@ -79,10 +79,6 @@ app.get("/api/weather", async (req, res) => {
   }
 });
 
-// --- DEPLOYMENT LOGIC: SERVE FRONTEND ---
-// This serves the built React files from the 'dist' folder
-const buildPath = path.join(__dirname, "../../frontend/dist");
-app.use(express.static(buildPath));
 
 // Handle React routing, return all non-API requests to index.html
 app.get(/^(?!\/api).+/, (req, res) => {
