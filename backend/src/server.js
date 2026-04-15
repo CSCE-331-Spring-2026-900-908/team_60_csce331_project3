@@ -80,17 +80,6 @@ app.post("/api/auth/google", async (req, res) => {
     }
 });
 
-// 3. Inventory Route
-app.get("/api/inventory", async (req, res) => {
-    try {
-        const result = await pool.query("SELECT inventory_id, name, quantity, unit FROM inventory ORDER BY quantity ASC");
-        res.json(result.rows);
-    } catch (err) {
-        console.error("Inventory Fetch Error:", err.message);
-        res.status(500).json([]); 
-    }
-});
-
 // 4. Employees Route
 app.get("/api/employees", async (req, res) => {
     try {
@@ -118,4 +107,9 @@ app.post("/api/employees", async (req, res) => {
         console.error("Add Employee Error:", err.message);
         res.status(500).json({ error: err.message });
     }
+});
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`🚀 Aura Backend running on port ${PORT}`);
 });

@@ -3,8 +3,6 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
 import menuRoutes from "./routes/menuRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import inventoryRoutes from "./routes/inventoryRoutes.js";
@@ -12,8 +10,7 @@ import managerRoutes from "./routes/managerRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 
 const app = express();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
 
 // --- MIDDLEWARE ---
 app.use(cors());
@@ -81,18 +78,10 @@ app.get("/api/weather", async (req, res) => {
 
 
 // Handle React routing, return all non-API requests to index.html
-app.get(/^(?!\/api).+/, (req, res) => {
-    res.sendFile(path.join(buildPath, "index.html"));
+app.get("/", (req, res) => {
+  res.json({ message: "Aura backend is running" });
 });
 
-// --- START SERVER ---
-const PORT = process.env.PORT || 8080;
-// We check if this file is being run directly to avoid double-listening during tests
-if (process.env.NODE_ENV !== "test") {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
-}
 
 export default app;
 
