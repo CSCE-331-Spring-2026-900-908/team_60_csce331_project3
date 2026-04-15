@@ -16,28 +16,18 @@ app.post("/api/auth/google", async (req, res) => {
             audience: CLIENT_ID,
         });
         const payload = ticket.getPayload();
-<<<<<<< HEAD
-        const userEmail = payload.email.toLowerCase(); // Ensure case-insensitivity
-
-        // Cleaned up Whitelist
-=======
         const userEmail = payload.email;
         const googleId = payload.sub; // Unique numeric ID from Google
         const fullName = payload.name;
         const firstName = payload.name.split(' ')[0];
 
         // --- Whitelists ---
->>>>>>> 6d4ed298afac7b0495e447df677de38e227e79d1
         const managers = [
             "ok.samgarces@gmail.com",
             "reveille.bubbletea@gmail.com", 
             "ibrahimerandhawa@gmail.com", 
             "4andrew.siv@gmail.com",  
-<<<<<<< HEAD
-            "christianb62791@gmail.com",      
-=======
             "christianb62791@gmail.com",       
->>>>>>> 6d4ed298afac7b0495e447df677de38e227e79d1
             "rch27@tamu.edu"
         ];
 
@@ -130,16 +120,7 @@ app.post("/api/employees", async (req, res) => {
     }
 });
 
-<<<<<<< HEAD
-// 6. Start the server (Only if not in test mode)
-if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, "0.0.0.0", () => {
-        console.log(`🚀 Aura Backend running on port ${PORT}`);
-    });
-}
-=======
 // 6. Start the server
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Aura Backend running on port ${PORT}`);
 });
->>>>>>> 6d4ed298afac7b0495e447df677de38e227e79d1
