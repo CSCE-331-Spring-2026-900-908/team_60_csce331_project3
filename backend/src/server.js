@@ -109,7 +109,6 @@ app.post("/api/employees", async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`🚀 Aura Backend running on port ${PORT}`);
 });
