@@ -112,6 +112,7 @@ const ChatBot = () => {
 };
 
 // --- STYLES ---
+// --- STYLES  ---
 const chatWindow = { width: "350px", height: "500px", background: "rgba(232, 245, 233, 0.95)", backdropFilter: "blur(15px)", border: "1px solid rgba(255, 255, 255, 0.5)", borderRadius: "30px", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 20px 40px rgba(27, 67, 50, 0.15)" };
 const chatHeader = { background: "#1b4332", padding: "20px", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center", textTransform: "uppercase", fontSize: "0.75rem" };
 const statusDot = { width: "8px", height: "8px", background: "#52b788", borderRadius: "50%", boxShadow: "0 0 10px #52b788" };
