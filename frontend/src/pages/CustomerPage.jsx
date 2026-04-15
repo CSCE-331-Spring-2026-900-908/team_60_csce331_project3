@@ -177,7 +177,6 @@ export default function CustomerPage() {
   async function handlePlaceOrder() {
     if (cart.length === 0) return;
     
-    // Check if we are redeeming
     const isRedeeming = currentUser && currentUser.stamps >= 10;
     const finalAmount = isRedeeming ? 0 : Number(totalAmount.toFixed(2));
 
@@ -192,26 +191,36 @@ export default function CustomerPage() {
 
       const result = await placeOrder({ 
         items: flattenedItems, 
-        total_amount: finalAmount, // Sent as 0 if redeeming
+        total_amount: finalAmount, 
         customer_id: currentUser?.customer_id,
-        is_redemption: isRedeeming // We can tell backend to subtract 10 stamps
+        is_redemption: isRedeeming
       });
 
+      // --- THE UI FIX STARTS HERE ---
+      
+      // 1. Clear the cart for everyone
       setCart([]);
 
+      // 2. Build the message based on who the user is
       if (currentUser) {
         if (isRedeeming) {
-            setMessage(`✨ REWARD REDEEMED! Enjoy your free drink! ✨`);
-            // Update local state: subtract the 10 used
-            setCurrentUser(prev => ({ ...prev, stamps: prev.stamps - 10 }));
+          setMessage(`✨ REWARD REDEEMED! Order #${result.order_id} success! ✨`);
+          setCurrentUser(prev => ({ ...prev, stamps: prev.stamps - 10 }));
         } else {
-            const stampMsg = result.is_lucky ? `✨ DOUBLE STAMPS! (+2) ✨` : `+1 stamp added. 🌿`;
-            setMessage(`Order #${result.order_id} success! ${stampMsg}`);
-            setCurrentUser(prev => ({ ...prev, stamps: (prev.stamps || 0) + result.stamps_earned }));
+          const stampMsg = result.is_lucky ? `✨ DOUBLE STAMPS! (+2) ✨` : `+1 stamp added. 🌿`;
+          setMessage(`Order #${result.order_id} success! ${stampMsg}`);
+          setCurrentUser(prev => ({ ...prev, stamps: (prev.stamps || 0) + result.stamps_earned }));
         }
+      } else {
+        // This is for the GUESTS (not logged in)
+        setMessage(`success! order #${result.order_id} is being prepared.`);
       }
+
+      // 3. Clear the notification after 8 seconds
       setTimeout(() => setMessage(""), 8000); 
+
     } catch (err) {
+      console.error("Order error:", err);
       setMessage("failed to place order.");
     }
   }
