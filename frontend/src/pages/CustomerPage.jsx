@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { fetchMenu, placeOrder } from "../services/api";
 import Weather from '../components/Weather';
 import { GoogleLogin } from '@react-oauth/google';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 export default function CustomerPage() {
   // --- Main state ---
@@ -43,7 +44,7 @@ export default function CustomerPage() {
 
   // Weather fetch
   useEffect(() => {
-    fetch("http://localhost:8080/api/weather")
+    fetch("${API_BASE}/weather")
       .then(res => res.json())
       .then(data => setWeatherTemp(data.temp))
       .catch(err => console.error("Weather fetch failed:", err));
@@ -53,7 +54,7 @@ export default function CustomerPage() {
   const handleLoginSuccess = async (credentialResponse) => {
     try {
       const token = credentialResponse.credential;
-      const res = await fetch("http://localhost:8080/api/auth/google", {
+      const res = await fetch("${API_BASE}/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token })
