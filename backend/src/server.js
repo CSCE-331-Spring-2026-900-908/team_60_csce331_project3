@@ -1,6 +1,6 @@
 import app from "./app.js";
 import { OAuth2Client } from 'google-auth-library';
-import pool from "./config/db.js"; // <--- CRITICAL: You must import your DB pool!
+import pool from "./config/db.js"; 
 
 // 1. Configuration
 const PORT = process.env.PORT || 8080;
@@ -17,14 +17,18 @@ app.post("/api/auth/google", async (req, res) => {
         });
         const payload = ticket.getPayload();
         const userEmail = payload.email;
+        const googleId = payload.sub; // Unique numeric ID from Google
+        const fullName = payload.name;
+        const firstName = payload.name.split(' ')[0];
 
+        // --- Whitelists ---
         const managers = [
             "ok.samgarces@gmail.com",
             "reveille.bubbletea@gmail.com", 
             "ibrahimerandhawa@gmail.com", 
             "4andrew.siv@gmail.com",  
             "christianb62791@gmail.com",       
-	    "rch27@tamu.edu"
+            "rch27@tamu.edu"
         ];
 
         const cashiers = [
@@ -37,37 +41,58 @@ app.post("/api/auth/google", async (req, res) => {
         ];
 
         let assignedRole = null;
+
+        // Check Roles
         if (managers.includes(userEmail)) {
             assignedRole = "manager";
         } else if (cashiers.includes(userEmail)) {
             assignedRole = "cashier";
         } else {
-            return res.status(403).json({ error: "Access denied. Email not whitelisted." });
+            // NEW: If not an employee, handle as a Customer
+            assignedRole = "customer";
+            
+            try {
+                // Upsert customer: Insert if new, or do nothing if already exists
+                // We use the 'sub' from Google as our customer_id
+                await pool.query(
+                    `INSERT INTO customers (customer_id, name, stamps, lucky_draw_eligible, reward_points) 
+                     VALUES ($1, $2, 0, false, 0) 
+                     ON CONFLICT (customer_id) DO NOTHING`,
+                    [googleId, fullName]
+                );
+                console.log(`✅ Customer Handled: ${fullName} (${googleId})`);
+            } catch (dbErr) {
+                console.error("Database Error saving customer:", dbErr.message);
+                // We don't block login if DB fails, but we log it
+            }
         }
 
+        // Return the response to the frontend
         res.json({ 
             success: true, 
             role: assignedRole,
-            name: payload.name.split(' ')[0] 
+            name: firstName,
+            customer_id: googleId // Send this back so the frontend can use it for orders!
         });
+
     } catch (err) {
         console.error("Auth Error:", err);
         res.status(401).json({ error: "Invalid Google Token" });
     }
 });
 
-// 3. Inventory Route (Returns [] on error to prevent frontend crash)
+// 3. Inventory Route
 app.get("/api/inventory", async (req, res) => {
     try {
         const result = await pool.query("SELECT inventory_id, name, quantity, unit FROM inventory ORDER BY quantity ASC");
         res.json(result.rows);
     } catch (err) {
         console.error("Inventory Fetch Error:", err.message);
-        res.status(500).json([]); // Send empty array so .map() doesn't break
+        res.status(500).json([]); 
     }
 });
 
-// 4. Employees Route (Returns [] on error)
+// 4. Employees Route
 app.get("/api/employees", async (req, res) => {
     try {
         const result = await pool.query("SELECT employee_id, name, role, shift_status FROM employees ORDER BY name ASC");

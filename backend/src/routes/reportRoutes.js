@@ -1,5 +1,6 @@
 import express from 'express';
-import pool from '/home/andr/team_60_csce331_project3/backend/src/config/db.js'; // Assuming you have a db.js that configures 'pg'
+//import pool from '/home/andr/team_60_csce331_project3/backend/src/config/db.js'; // Assuming you have a db.js that configures 'pg'
+import db from '../config/db.js';
 
 const router = express.Router();
 

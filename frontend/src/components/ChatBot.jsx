@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 
 // --- CONFIGURATION ---
-// IMPORTANT: Replace the URL below with your actual Render Backend URL!
+// This logic automatically detects if you are running locally or on Render
 const API_URL = window.location.hostname === "localhost" 
   ? "http://localhost:8080/api/chat" 
-  : "https://dummy-project3-1.onrender.com/api/chat"; 
+  : "https://dummy-project3.onrender.com/api/chat"; 
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,37 +14,35 @@ const ChatBot = () => {
   ]);
   const chatEndRef = useRef(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = async (e) => {
-    if (e) e.preventDefault(); // Prevents page reload on form submit
+    if (e) e.preventDefault(); 
     if (!input.trim()) return;
 
-    // 1. Capture the input and clear the text box immediately for UI responsiveness
+    // 1. Capture input and clear UI immediately
     const currentInput = input;
     const userMsg = { role: "user", text: currentInput };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
     try {
-      // 2. Log for debugging in Browser Console (F12)
       console.log("🚀 Sending request to:", API_URL);
 
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: currentInput }), // Send the captured input
+        body: JSON.stringify({ message: currentInput }), 
       });
 
       if (!res.ok) throw new Error(`Server responded with ${res.status}`);
 
       const data = await res.json();
-      console.log("✅ Server Response:", data);
-
-      // 3. Update chat with AI response
+      
+      // 2. Update chat with AI response
       if (data.reply) {
         setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
       } else {
@@ -63,7 +61,6 @@ const ChatBot = () => {
     <div style={{ position: "fixed", bottom: "30px", right: "30px", zIndex: 2000, fontFamily: "'Inter', sans-serif" }}>
       {isOpen ? (
         <div style={chatWindow}>
-          {/* Header */}
           <div style={chatHeader}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={statusDot}></div>
@@ -72,7 +69,6 @@ const ChatBot = () => {
             <button onClick={() => setIsOpen(false)} style={closeBtn}>✕</button>
           </div>
           
-          {/* Messages Area */}
           <div style={messageContainer}>
             {messages.map((m, i) => (
               <div key={i} style={{ marginBottom: "15px", textAlign: m.role === "user" ? "right" : "left" }}>
@@ -95,7 +91,6 @@ const ChatBot = () => {
             <div ref={chatEndRef} />
           </div>
 
-          {/* Input Area (Wrapped in a form for better Enter-key support) */}
           <form onSubmit={sendMessage} style={inputArea}>
             <input 
               value={input} 
@@ -107,7 +102,6 @@ const ChatBot = () => {
           </form>
         </div>
       ) : (
-        /* Floating Toggle Button */
         <button onClick={() => setIsOpen(true)} style={toggleBtn}>
           <span style={{ fontSize: "1.8rem" }}>🧋</span>
           <div style={notificationPing}></div>
@@ -117,109 +111,16 @@ const ChatBot = () => {
   );
 };
 
-// --- AURA CHAT STYLES ---
-const chatWindow = {
-  width: "350px",
-  height: "500px",
-  background: "rgba(232, 245, 233, 0.95)",
-  backdropFilter: "blur(15px)",
-  border: "1px solid rgba(255, 255, 255, 0.5)",
-  borderRadius: "30px",
-  display: "flex",
-  flexDirection: "column",
-  overflow: "hidden",
-  boxShadow: "0 20px 40px rgba(27, 67, 50, 0.15)"
-};
-
-const chatHeader = {
-  background: "#1b4332",
-  padding: "20px",
-  color: "white",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  textTransform: "uppercase",
-  fontSize: "0.75rem"
-};
-
-const statusDot = {
-  width: "8px",
-  height: "8px",
-  background: "#52b788",
-  borderRadius: "50%",
-  boxShadow: "0 0 10px #52b788"
-};
-
-const closeBtn = {
-  background: "none",
-  border: "none",
-  color: "white",
-  cursor: "pointer",
-  fontSize: "1rem",
-  opacity: 0.7
-};
-
-const messageContainer = {
-  flex: 1,
-  padding: "20px",
-  overflowY: "auto",
-  scrollbarWidth: "none"
-};
-
-const inputArea = {
-  padding: "20px",
-  background: "white",
-  display: "flex",
-  gap: "10px",
-  borderTop: "1px solid rgba(0,0,0,0.05)"
-};
-
-const textInput = {
-  flex: 1,
-  background: "#f1f8f1",
-  border: "none",
-  color: "#1b4332",
-  padding: "12px 15px",
-  borderRadius: "15px",
-  outline: "none",
-  fontSize: "0.9rem",
-  fontWeight: "600"
-};
-
-const sendBtn = {
-  background: "#2d6a4f",
-  color: "white",
-  border: "none",
-  borderRadius: "12px",
-  width: "45px",
-  fontWeight: "bold",
-  cursor: "pointer",
-  fontSize: "1.2rem",
-  transition: "0.2s"
-};
-
-const toggleBtn = {
-  width: "70px",
-  height: "70px",
-  borderRadius: "24px",
-  background: "#1b4332",
-  color: "white",
-  border: "none",
-  cursor: "pointer",
-  boxShadow: "0 10px 25px rgba(27, 67, 50, 0.3)",
-  position: "relative",
-  transition: "transform 0.3s ease"
-};
-
-const notificationPing = {
-  position: "absolute",
-  top: "-2px",
-  right: "-2px",
-  width: "14px",
-  height: "14px",
-  background: "#52b788",
-  borderRadius: "50%",
-  border: "3px solid #e8f5e9"
-};
+// --- STYLES ---
+const chatWindow = { width: "350px", height: "500px", background: "rgba(232, 245, 233, 0.95)", backdropFilter: "blur(15px)", border: "1px solid rgba(255, 255, 255, 0.5)", borderRadius: "30px", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 20px 40px rgba(27, 67, 50, 0.15)" };
+const chatHeader = { background: "#1b4332", padding: "20px", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center", textTransform: "uppercase", fontSize: "0.75rem" };
+const statusDot = { width: "8px", height: "8px", background: "#52b788", borderRadius: "50%", boxShadow: "0 0 10px #52b788" };
+const closeBtn = { background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "1rem", opacity: 0.7 };
+const messageContainer = { flex: 1, padding: "20px", overflowY: "auto", scrollbarWidth: "none" };
+const inputArea = { padding: "20px", background: "white", display: "flex", gap: "10px", borderTop: "1px solid rgba(0,0,0,0.05)" };
+const textInput = { flex: 1, background: "#f1f8f1", border: "none", color: "#1b4332", padding: "12px 15px", borderRadius: "15px", outline: "none", fontSize: "0.9rem", fontWeight: "600" };
+const sendBtn = { background: "#2d6a4f", color: "white", border: "none", borderRadius: "12px", width: "45px", fontWeight: "bold", cursor: "pointer", fontSize: "1.2rem", transition: "0.2s" };
+const toggleBtn = { width: "70px", height: "70px", borderRadius: "24px", background: "#1b4332", color: "white", border: "none", cursor: "pointer", boxShadow: "0 10px 25px rgba(27, 67, 50, 0.3)", position: "relative", transition: "transform 0.3s ease" };
+const notificationPing = { position: "absolute", top: "-2px", right: "-2px", width: "14px", height: "14px", background: "#52b788", borderRadius: "50%", border: "3px solid #e8f5e9" };
 
 export default ChatBot;
