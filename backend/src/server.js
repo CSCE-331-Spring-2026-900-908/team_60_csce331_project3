@@ -1,11 +1,20 @@
 import app from "./app.js";
 import { OAuth2Client } from 'google-auth-library';
 import pool from "./config/db.js"; 
+import cors from "cors";
 
 // 1. Configuration
 const PORT = process.env.PORT || 8080;
 const CLIENT_ID = "2055879532-b174qi00vahh6i55j79m27je0bkeosjq.apps.googleusercontent.com";
 const client = new OAuth2Client(CLIENT_ID);
+
+app.use(cors({
+    origin: [
+        "http://localhost:5173", 
+        "https://dummy-project3-1.onrender.com" // <--- ADD YOUR RENDER URL HERE
+    ],
+    credentials: true
+}));
 
 // 2. Auth Route
 app.post("/api/auth/google", async (req, res) => {
