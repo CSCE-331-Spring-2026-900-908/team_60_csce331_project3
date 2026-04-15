@@ -2,28 +2,32 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchMenu, placeOrder } from "../services/api";
 import Weather from '../components/Weather';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function CustomerPage() {
-  //main menu and cart state
+  // --- Main state ---
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [message, setMessage] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   
-  // Modal & Environment State
+  // --- Loyalty & Auth State (Feature 3) ---
+  const [currentUser, setCurrentUser] = useState(null); 
+
+  // --- Modal & Environment State ---
   const [showToppings, setShowToppings] = useState(false);
   const [pendingItem, setPendingItem] = useState(null);
   const [selectedToppings, setSelectedToppings] = useState([]);
-  const [weatherTemp, setWeatherTemp] = useState(null); // Used for weather logic
+  const [weatherTemp, setWeatherTemp] = useState(null); 
 
-  // Gacha State
+  // --- Gacha State ---
   const [gachaResult, setGachaResult] = useState(null);
   const [gachaRolls, setGachaRolls] = useState(3);
   const [gachaSpinning, setGachaSpinning] = useState(false);
 
-  const tempInflectionPoint = 60; //temperature recommendation breakpoint
+  const tempInflectionPoint = 60; 
 
-  //load menu items from the backend on page mount
+  // Load menu
   useEffect(() => {
     async function loadMenu() {
       try {
@@ -37,7 +41,7 @@ export default function CustomerPage() {
     loadMenu();
   }, []);
 
-  // Weather fetch for logic
+  // Weather fetch
   useEffect(() => {
     fetch("http://localhost:8080/api/weather")
       .then(res => res.json())
@@ -45,44 +49,60 @@ export default function CustomerPage() {
       .catch(err => console.error("Weather fetch failed:", err));
   }, []);
 
-  //helper to normalize category strings from the db
+  // --- Auth Handlers ---
+  const handleLoginSuccess = async (credentialResponse) => {
+    try {
+      const token = credentialResponse.credential;
+      const res = await fetch("http://localhost:8080/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // We include the stamps from the database here
+        setCurrentUser({
+          name: data.name,
+          customer_id: data.customer_id,
+          role: data.role,
+          stamps: data.stamps || 0 // Added this so bar shows on login
+        });
+        setMessage(`welcome, ${data.name}! loyalty mode active.`);
+      }
+    } catch (err) {
+      console.error("Login Error:", err);
+      setMessage("login failed.");
+    }
+  };
+
+  // --- Helper Logic ---
   const getCleanCat = (item) => item.category ? item.category.toString().trim().toLowerCase() : "";
 
-  //separate toppings from drinks so we can show them in the modal
   const toppingsOptions = useMemo(() => 
     menuItems.filter(item => getCleanCat(item) === 'topping'), 
   [menuItems]);
 
-  // Categories include exactly: all, surprise me, recommended, and others
   const categories = useMemo(() => {
     const rawCats = [...new Set(menuItems.map(item => getCleanCat(item)))];
     return ["all", "surprise me", "recommended", ...rawCats.filter(c => c !== 'topping' && c !== "")];
   }, [menuItems]);
 
-  // Filtered items restoring the "recommended" logic exactly
   const filteredItems = useMemo(() => {
     const drinks = menuItems.filter(item => getCleanCat(item) !== 'topping');
     if (activeCategory === "all") return drinks;
-    if(activeCategory == "recommended"){ //weather based recommendations tab
-	if(weatherTemp == null) return drinks; //incase not working
-	let tempRec;
-
-	if(weatherTemp < tempInflectionPoint){
-	    tempRec = "H"; //for cold temp recommend hot drinks
-	}else {
-	    tempRec = "C" //hot temp rec cold drinks
-	}
-	return drinks.filter(item => item.temperature  === tempRec);
+    if(activeCategory === "recommended"){
+      if(weatherTemp == null) return drinks;
+      let tempRec = weatherTemp < tempInflectionPoint ? "H" : "C";
+      return drinks.filter(item => item.temperature === tempRec);
     } 
     return drinks.filter(item => getCleanCat(item) === activeCategory);
   }, [menuItems, activeCategory, weatherTemp]);
 
-  //total number of items in cart for the badge
   const totalItemsCount = useMemo(() => 
     cart.reduce((sum, item) => sum + item.quantity, 0), 
   [cart]);
 
-  //total price including toppings and quantity
   const totalAmount = useMemo(() => 
     cart.reduce((sum, item) => {
       const toppingTotal = item.toppings.reduce((s, t) => s + t.price, 0);
@@ -90,43 +110,36 @@ export default function CustomerPage() {
     }, 0), 
   [cart]);
 
-  // --- GACHA LOGIC ---
+  // --- Gacha ---
   const handleGachaRoll = () => {
     if (gachaRolls <= 0 || gachaSpinning) return;
     setGachaSpinning(true);
     setGachaResult(null);
-
     setTimeout(() => {
       const drinks = menuItems.filter(item => getCleanCat(item) !== 'topping');
       let pool = drinks;
-      
-      //bias the pool toward weather-appropriate drinks
       if (weatherTemp !== null) {
         const preferred = weatherTemp >= 70 ? 'C' : 'H';
         const biased = drinks.filter(d => d.temperature === preferred);
-        pool = [...biased, ...biased, ...drinks]; // 2x weight match
+        pool = [...biased, ...biased, ...drinks];
       }
-
       const pick = pool[Math.floor(Math.random() * pool.length)];
-      //rarity roll: 60% common, 30% rare, 10% ultra rare
       const rarityRoll = Math.random();
       const rarity = rarityRoll < 0.6 ? 'Common' : rarityRoll < 0.9 ? 'Rare' : 'Ultra Rare';
       const rarityColor = rarity === 'Ultra Rare' ? '#f59e0b' : rarity === 'Rare' ? '#8b5cf6' : '#2d6a4f';
-
       setGachaResult({ ...pick, rarity, rarityColor, price: pick.base_price });
       setGachaRolls(prev => prev - 1);
       setGachaSpinning(false);
     }, 1500);
   };
 
-  // --- MODAL & CART ---
+  // --- Cart/Modal ---
   function openToppings(item) {
     setPendingItem(item);
     setSelectedToppings([]); 
     setShowToppings(true);
   }
 
-  //toggle a topping on or off for the current item
   function toggleTopping(topping) {
     setSelectedToppings(prev => 
       prev.find(t => t.menu_item_id === topping.menu_item_id)
@@ -135,7 +148,6 @@ export default function CustomerPage() {
     );
   }
 
-  //add the item with selected toppings to cart, increment qty if already exists
   function confirmAddToCart() {
     const cartId = `${pendingItem.menu_item_id}-${selectedToppings.map(t => t.menu_item_id).sort().join('-')}`;
     setCart((prev) => {
@@ -155,29 +167,60 @@ export default function CustomerPage() {
     setShowToppings(false);
   }
 
-  //delta is +1 or -1, removes item if quantity hits 0
   function changeQuantity(cartId, delta) {
     setCart(prev => prev.map(item => 
       item.cartId === cartId ? { ...item, quantity: item.quantity + delta } : item
     ).filter(item => item.quantity > 0));
   }
 
-  //flatten cart into individual order items and send to backend
+  // --- ORDER PLACEMENT (Feature 3 Hook) ---
   async function handlePlaceOrder() {
     if (cart.length === 0) return;
+    
+    const isRedeeming = currentUser && currentUser.stamps >= 10;
+    const finalAmount = isRedeeming ? 0 : Number(totalAmount.toFixed(2));
+
     try {
       const flattenedItems = [];
       cart.forEach(cartItem => {
         for(let i=0; i < cartItem.quantity; i++) {
-          flattenedItems.push({ menu_item_id: cartItem.menu_item_id, price: cartItem.price });
-          cartItem.toppings.forEach(t => flattenedItems.push({ menu_item_id: t.menu_item_id, price: t.price }));
+          flattenedItems.push({ menu_item_id: cartItem.menu_item_id, price: isRedeeming ? 0 : cartItem.price });
+          cartItem.toppings.forEach(t => flattenedItems.push({ menu_item_id: t.menu_item_id, price: isRedeeming ? 0 : t.price }));
         }
       });
-      const result = await placeOrder({ items: flattenedItems, total_amount: Number(totalAmount.toFixed(2)) });
-      setMessage(`success! order #${result.order_id} is being prepared.`);
+
+      const result = await placeOrder({ 
+        items: flattenedItems, 
+        total_amount: finalAmount, 
+        customer_id: currentUser?.customer_id,
+        is_redemption: isRedeeming
+      });
+
+      // --- THE UI FIX STARTS HERE ---
+      
+      // 1. Clear the cart for everyone
       setCart([]);
-      setTimeout(() => setMessage(""), 5000); 
+
+      // 2. Build the message based on who the user is
+      if (currentUser) {
+        if (isRedeeming) {
+          setMessage(`✨ REWARD REDEEMED! Order #${result.order_id} success! ✨`);
+          setCurrentUser(prev => ({ ...prev, stamps: prev.stamps - 10 }));
+        } else {
+          const stampMsg = result.is_lucky ? `✨ DOUBLE STAMPS! (+2) ✨` : `+1 stamp added. 🌿`;
+          setMessage(`Order #${result.order_id} success! ${stampMsg}`);
+          setCurrentUser(prev => ({ ...prev, stamps: (prev.stamps || 0) + result.stamps_earned }));
+        }
+      } else {
+        // This is for the GUESTS (not logged in)
+        setMessage(`success! order #${result.order_id} is being prepared.`);
+      }
+
+      // 3. Clear the notification after 8 seconds
+      setTimeout(() => setMessage(""), 8000); 
+
     } catch (err) {
+      console.error("Order error:", err);
       setMessage("failed to place order.");
     }
   }
@@ -216,10 +259,8 @@ export default function CustomerPage() {
             <h1 style={logoStyle}>aura <span style={{fontWeight:'300'}}>kiosk</span></h1>
             <p style={subtitleStyle}>steeped in nature</p>
           </div>
-	  
-            <div style={weatherCapsule}><Weather /></div>
-        
-	</div>
+          <div style={weatherCapsule}><Weather /></div>
+        </div>
       </header>
 
       {message && <div style={auraNotification}>{message}</div>}
@@ -231,22 +272,22 @@ export default function CustomerPage() {
       </div>
 
       <div style={mainLayout}>
-	{activeCategory === "recommended" && weatherTemp !== null && (
-	  <div style = {{ gridColumn: "1/ -1", textAlign: "center", marginBottom: "1rem" }}>
-	    <span style ={{
-		background: weatherTemp >= 70 ? "#e0f2fe" : "#fce7f3",
-		color: weatherTemp >= 70 ? "#0369a1" : "#9d174d",
-		padding: "8px 24px",
-		borderRadius: "50px",
-		fontWeight: "700",
-		fontSize: "0.9rem"
-	    }}>
-		{weatherTemp >= tempInflectionPoint
-		 ? `It's ${weatherTemp}°F outside - perfect weather for something cold 🧊`
-                 : `It's ${weatherTemp}°F outside - time to get something to warm up ☕! `}
-	   </span>
-	</div>
-      )}
+        {activeCategory === "recommended" && weatherTemp !== null && (
+          <div style = {{ gridColumn: "1/ -1", textAlign: "center", marginBottom: "1rem" }}>
+            <span style ={{
+              background: weatherTemp >= 70 ? "#e0f2fe" : "#fce7f3",
+              color: weatherTemp >= 70 ? "#0369a1" : "#9d174d",
+              padding: "8px 24px",
+              borderRadius: "50px",
+              fontWeight: "700",
+              fontSize: "0.9rem"
+            }}>
+              {weatherTemp >= tempInflectionPoint
+               ? `It's ${weatherTemp}°F outside - perfect weather for something cold 🧊`
+               : `It's ${weatherTemp}°F outside - time to get something to warm up ☕! `}
+            </span>
+          </div>
+        )}
 
         {activeCategory === "surprise me" ? (
           <section style={gachaContainer}>
@@ -294,7 +335,11 @@ export default function CustomerPage() {
         )}
 
         <aside style={glassCart}>
-          <div style={cartTop}><h2 style={{ margin: 0, fontSize: '1.2rem' }}>your order</h2><span style={countBadge}>{totalItemsCount}</span></div>
+          <div style={cartTop}>
+            <h2 style={{ margin: 0, fontSize: '1.2rem' }}>your order</h2>
+            <span style={countBadge}>{totalItemsCount}</span>
+          </div>
+          
           <div style={cartScrollArea}>
             {cart.length === 0 ? <p style={emptyText}>basket is empty.</p> : cart.map((item) => (
               <div key={item.cartId} style={auraCartItem}>
@@ -310,10 +355,53 @@ export default function CustomerPage() {
               </div>
             ))}
           </div>
+
           {cart.length > 0 && (
             <div style={checkoutArea}>
+              {/* LOYALTY SECTION */}
+              <div style={loyaltyBanner}>
+                {currentUser ? (
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center' }}>
+                      <div style={activeDot}></div>
+                      <span style={{ fontSize: '0.8rem', fontWeight: '700' }}>
+                        {currentUser.name.toLowerCase()}'s card: {currentUser.stamps || 0} / 10
+                      </span>
+                    </div>
+                    {/* PROGRESS BAR */}
+                    <div style={progressBg}>
+                      <div style={progressBar(currentUser.stamps || 0)}></div>
+                    </div>
+                    {(currentUser.stamps || 0) >= 10 && (
+                        <p style={{ color: '#2d6a4f', fontSize: '0.7rem', fontWeight: '800', margin: '5px 0 0 0' }}>
+                          ✨ FREE DRINK READY! ✨
+                        </p>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'5px'}}>
+                    <span style={{fontSize:'0.7rem', fontWeight:'700', opacity:0.7}}>login to earn stamps</span>
+                    <GoogleLogin 
+                      onSuccess={handleLoginSuccess}
+                      onError={() => setMessage("Login Failed")}
+                      useOneTap
+                      shape="pill"
+                      size="small"
+                    />
+                  </div>
+                )}
+              </div>
+
               <div style={auraTotalRow}><span>total</span><span>${totalAmount.toFixed(2)}</span></div>
-              <button style={auraCheckoutBtn} onClick={handlePlaceOrder}>checkout</button>
+              <button 
+  style={{
+    ...auraCheckoutBtn, 
+    backgroundColor: (currentUser && currentUser.stamps >= 10) ? '#f59e0b' : '#1b4332'
+  }} 
+  onClick={handlePlaceOrder}
+>
+  {(currentUser && currentUser.stamps >= 10) ? "🎁 redeem free drink" : "checkout"}
+</button>
             </div>
           )}
         </aside>
@@ -366,3 +454,27 @@ const emptyText = { textAlign: "center", color: "#94a3b8", marginTop: "2rem", fo
 const gachaSub = { color: '#2d6a4f', opacity: 0.6, fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '2px' };
 const gachaHeader = { marginBottom: '2rem' };
 const emptyGacha = { padding: '3rem 0', opacity: 0.5, fontWeight: '700' };
+
+// --- STYLES ---
+const loyaltyBanner = { 
+    marginBottom: '1.5rem', 
+    padding: '15px', 
+    borderRadius: '20px', 
+    background: '#f1f8f1', 
+    border: '1px solid #c8e6c9',
+    textAlign: 'center'
+};
+const activeDot = {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    backgroundColor: '#2d6a4f',
+    boxShadow: '0 0 8px #2d6a4f'
+};
+const progressBg = { height: '8px', background: '#e2e8f0', borderRadius: '10px', marginTop: '10px', overflow: 'hidden' };
+const progressBar = (stamps) => ({ 
+    height: '100%', 
+    width: `${Math.min((stamps % 11) * 10, 100)}%`, // Simplified Fill logic
+    background: '#2d6a4f', 
+    transition: 'width 0.5s ease-in-out' 
+});

@@ -49,26 +49,31 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const client = await pool.connect();
   try {
-    const { total_amount, items } = req.body;
+    const { total_amount, items, customer_id, is_redemption } = req.body; 
     
+    // Force ID to string and log it for debugging
+    const finalCustomerId = (customer_id && customer_id !== "undefined") ? String(customer_id) : "1";
+    console.log(`📦 Processing Order for Customer: ${finalCustomerId} | Redemption: ${!!is_redemption}`);
+
     await client.query('BEGIN');
 
-    // 1. Insert into orders table
+    // 1. Insert Order - Using LOCALTIME and CURRENT_DATE for database compatibility
     const orderResult = await client.query(
-      'INSERT INTO public.orders (customer_id, employee_id, "date", status, total_amount, "time", z_reported) VALUES (1, 1, CURRENT_DATE, \'pending\', $1, CURRENT_TIME, false) RETURNING order_id',
-      [Number(total_amount)]
+      `INSERT INTO public.orders (customer_id, employee_id, date, status, total_amount, time, z_reported) 
+       VALUES ($1, 1, CURRENT_DATE, 'pending', $2, LOCALTIME, false) 
+       RETURNING order_id`,
+      [finalCustomerId, Number(total_amount)]
     );
     
     const newOrderId = orderResult.rows[0].order_id;
 
-    // 2. The Fix: Find the highest order_item_id in the database so we can auto-increment it ourselves
+    // 2. Insert Items (Manual ID increment logic preserved)
     const maxIdResult = await client.query("SELECT COALESCE(MAX(order_item_id), 0) AS max_id FROM public.orderitems");
     let currentItemId = parseInt(maxIdResult.rows[0].max_id, 10);
 
-    // 3. Insert into orderitems, manually passing the new order_item_id
     if (items && items.length > 0) {
       for (const item of items) {
-        currentItemId++; // Add 1 for the new item
+        currentItemId++; 
         await client.query(
           'INSERT INTO public.orderitems (order_item_id, order_id, menu_item_id, quantity, price) VALUES ($1, $2, $3, $4, $5)',
           [currentItemId, newOrderId, item.menu_item_id, item.quantity, item.price || 0]
@@ -76,17 +81,49 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // 3. Loyalty Logic (Feature 3)
+    let stampsEarned = 0;
+    let isLucky = false;
+
+    if (finalCustomerId !== "1") {
+      if (is_redemption === true || is_redemption === 'true') {
+        // --- REDEEM MODE: Subtract 10 stamps ---
+        await client.query(
+          `UPDATE customers SET stamps = stamps - 10 WHERE customer_id = $1`,
+          [finalCustomerId]
+        );
+        console.log(`🎁 Reward Redeemed: -10 stamps for ${finalCustomerId}`);
+      } else {
+        // --- EARN MODE: Standard Stamp Logic (20% Double Stamp chance) ---
+        stampsEarned = 1;
+        const roll = Math.random();
+        if (roll <= 0.20) {
+          stampsEarned = 2;
+          isLucky = true;
+        }
+
+        await client.query(
+          `UPDATE customers SET stamps = stamps + $1, lucky_draw_eligible = true WHERE customer_id = $2`,
+          [stampsEarned, finalCustomerId]
+        );
+        console.log(`⭐ Stamps Updated: +${stampsEarned} for ${finalCustomerId}`);
+      }
+    }
+
     await client.query('COMMIT');
 
-    // 4. Return success to the Kiosk
+    // 4. Return complete status to frontend
     res.status(201).json({ 
       order_id: newOrderId,
-      status: 'pending'
+      status: 'pending',
+      stamps_earned: stampsEarned,
+      is_lucky: isLucky,
+      is_redemption: !!is_redemption
     });
 
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error("ORDER PLACEMENT ERROR:", err.message);
+    console.error("❌ CRITICAL ORDER ERROR:", err.message);
     res.status(500).json({ error: err.message });
   } finally {
     client.release();

@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+# team_60_csce331_project3
+repo for the development of team 60's website
+
+=======
 # Aura Boba - Team 60
 CSCE 331 Project 3 | Spring 2026
 
@@ -41,3 +46,4 @@ npm run dev
 - `/kitchen` - Kitchen display (requires manager login)
 - `/manager` - Manager dashboard (requires manager login)
 - `/menuboard` - Menu board
+>>>>>>> main

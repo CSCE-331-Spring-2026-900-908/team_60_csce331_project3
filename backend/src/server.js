@@ -16,15 +16,28 @@ app.post("/api/auth/google", async (req, res) => {
             audience: CLIENT_ID,
         });
         const payload = ticket.getPayload();
+<<<<<<< HEAD
         const userEmail = payload.email.toLowerCase(); // Ensure case-insensitivity
 
         // Cleaned up Whitelist
+=======
+        const userEmail = payload.email;
+        const googleId = payload.sub; // Unique numeric ID from Google
+        const fullName = payload.name;
+        const firstName = payload.name.split(' ')[0];
+
+        // --- Whitelists ---
+>>>>>>> 6d4ed298afac7b0495e447df677de38e227e79d1
         const managers = [
             "ok.samgarces@gmail.com",
             "reveille.bubbletea@gmail.com", 
             "ibrahimerandhawa@gmail.com", 
             "4andrew.siv@gmail.com",  
+<<<<<<< HEAD
             "christianb62791@gmail.com",      
+=======
+            "christianb62791@gmail.com",       
+>>>>>>> 6d4ed298afac7b0495e447df677de38e227e79d1
             "rch27@tamu.edu"
         ];
 
@@ -37,20 +50,40 @@ app.post("/api/auth/google", async (req, res) => {
         ];
 
         let assignedRole = null;
+
+        // Check Roles
         if (managers.includes(userEmail)) {
             assignedRole = "manager";
         } else if (cashiers.includes(userEmail)) {
             assignedRole = "cashier";
         } else {
-            console.warn(`Blocked access attempt: ${userEmail}`);
-            return res.status(403).json({ error: "Access denied. Email not whitelisted." });
+            // NEW: If not an employee, handle as a Customer
+            assignedRole = "customer";
+            
+            try {
+                // Upsert customer: Insert if new, or do nothing if already exists
+                // We use the 'sub' from Google as our customer_id
+                await pool.query(
+                    `INSERT INTO customers (customer_id, name, stamps, lucky_draw_eligible, reward_points) 
+                     VALUES ($1, $2, 0, false, 0) 
+                     ON CONFLICT (customer_id) DO NOTHING`,
+                    [googleId, fullName]
+                );
+                console.log(`✅ Customer Handled: ${fullName} (${googleId})`);
+            } catch (dbErr) {
+                console.error("Database Error saving customer:", dbErr.message);
+                // We don't block login if DB fails, but we log it
+            }
         }
 
+        // Return the response to the frontend
         res.json({ 
             success: true, 
             role: assignedRole,
-            name: payload.name.split(' ')[0] 
+            name: firstName,
+            customer_id: googleId // Send this back so the frontend can use it for orders!
         });
+
     } catch (err) {
         console.error("Auth Error:", err);
         res.status(401).json({ error: "Invalid Google Token" });
@@ -97,9 +130,16 @@ app.post("/api/employees", async (req, res) => {
     }
 });
 
+<<<<<<< HEAD
 // 6. Start the server (Only if not in test mode)
 if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, "0.0.0.0", () => {
         console.log(`🚀 Aura Backend running on port ${PORT}`);
     });
 }
+=======
+// 6. Start the server
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Aura Backend running on port ${PORT}`);
+});
+>>>>>>> 6d4ed298afac7b0495e447df677de38e227e79d1
