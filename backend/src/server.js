@@ -18,6 +18,7 @@ import reportRoutes from "./routes/reportRoutes.js";
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = path.dirname(__filename);
 
 // --- 1. Middleware & CORS ---
@@ -197,19 +198,10 @@ app.get("/api/weather", async (req, res) => {
   }
 });
 
-// --- 6. Deployment Logic ---
-const buildPath = path.join(__dirname, "../../frontend/dist");
-
-if (fs.existsSync(buildPath)) {
-    app.use(express.static(buildPath));
-    app.get(/^(?!\/api|\/auth).+/, (req, res) => {
-        res.sendFile(path.join(buildPath, "index.html"));
-    });
-} else {
-    app.get("/", (req, res) => {
-        res.send("Backend is running. Please run 'npm run dev' in the frontend folder.");
-    });
-}
+// --- 6. Status Route ---
+app.get("/", (req, res) => {
+    res.send("🚀 Aura Boba Backend is Live and Running!");
+});
 
 // --- 7. Server Start ---
 const PORT = process.env.PORT || 8080;
