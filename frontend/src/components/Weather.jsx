@@ -3,12 +3,20 @@ import React, { useState, useEffect } from "react";
 const Weather = () => {
   const [temp, setTemp] = useState(null);
 
+  // SANITIZER: Use the Render URL if available, otherwise fallback to localhost
+  const VITE_URL = import.meta.env.VITE_API_URL;
+  const API_BASE = VITE_URL 
+    ? `${VITE_URL.replace(/\/+$/, "")}/api` 
+    : "http://localhost:8080/api";
+
   useEffect(() => {
-    fetch("http://localhost:8080/api/weather")
+    // Crucial: Use the sanitized API_BASE with backticks
+    fetch(`${API_BASE}/weather`)
       .then(res => res.json())
       .then(data => setTemp(data.temp))
       .catch(err => console.error("Frontend fetch failed:", err));
-  }, []);
+  }, [API_BASE]);
+
 
   // Aura loading state
   if (temp === null) return (

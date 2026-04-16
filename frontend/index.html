@@ -13,7 +13,7 @@
       #translate_element {
         position: fixed;
         top: 15px;
-        right: 15px;
+        left: 15px;
         z-index: 9999;
         background: rgba(255, 255, 255, 0.9);
         padding: 4px;
@@ -33,7 +33,7 @@
         new google.translate.TranslateElement(
           { 
             pageLanguage: 'en', 
-            includedLanguages: 'es',
+            includedLanguages: 'es,zh-CN,vi,ko,tl,ar,fr,de,ja,ru',
             layout: google.translate.TranslateElement.InlineLayout.SIMPLE 
           }, 
           'translate_element'
