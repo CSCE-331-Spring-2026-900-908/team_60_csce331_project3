@@ -3,14 +3,12 @@ import Weather from "../components/Weather";
 import ChatBot from "../components/ChatBot";
 
 export default function PortalPage() {
-  // Define the dynamic backend URL
-  const BACKEND_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
-
-  const handleProtectedLogin = (e) => {
+  // Logic to handle the redirect and save the clicked destination
+  const handleProtectedLogin = (e, destination) => {
     e.preventDefault();
     const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
-    // This must be window.location.href to jump to the backend!
-    window.location.href = `${BACKEND_URL}/auth/google`; 
+    // Pass the destination in the URL
+    window.location.href = `${BACKEND_URL}/auth/google?state=${destination}`; 
   };
 
   const cardStyle = {
@@ -28,7 +26,7 @@ export default function PortalPage() {
     flexDirection: "column",
     justifyContent: "center",
     transition: "transform 0.3s ease, box-shadow 0.3s ease",
-    cursor: "pointer" // Added for the buttons
+    cursor: "pointer"
   };
 
   const titleStyle = {
@@ -51,7 +49,6 @@ export default function PortalPage() {
     <div style={{
       minHeight: "100vh",
       backgroundColor: "#e8f5e9",
-      fontFamily: "var(--sans)", 
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -77,24 +74,24 @@ export default function PortalPage() {
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", justifyContent: "center", maxWidth: "1000px" }}>
         
-        {/* PUBLIC ROUTES: Use standard Link */}
+        {/* PUBLIC ROUTES */}
         <Link to="/customer" style={cardStyle} className="hover-lift">
           <h2 style={titleStyle}>kiosk</h2>
           <p style={descStyle}>self-service ordering</p>
         </Link>
 
-        {/* PROTECTED ROUTES: Redirect to Backend Google Auth */}
-        <a href="#" onClick={handleProtectedLogin} style={cardStyle} className="hover-lift">
+        {/* PROTECTED ROUTES: Now passing the route string to the handler */}
+        <a href="#" onClick={(e) => handleProtectedLogin(e, "/cashierpage")} style={cardStyle} className="hover-lift">
           <h2 style={titleStyle}>cashier</h2>
           <p style={descStyle}>in-store processing</p>
         </a>
 
-        <a href="#" onClick={handleProtectedLogin} style={cardStyle} className="hover-lift">
+        <a href="#" onClick={(e) => handleProtectedLogin(e, "/kitchen")} style={cardStyle} className="hover-lift">
           <h2 style={titleStyle}>kitchen</h2>
           <p style={descStyle}>order fulfillment queue</p>
         </a>
 
-        <a href="#" onClick={handleProtectedLogin} style={cardStyle} className="hover-lift">
+        <a href="#" onClick={(e) => handleProtectedLogin(e, "/manager")} style={cardStyle} className="hover-lift">
           <h2 style={titleStyle}>manager</h2>
           <p style={descStyle}>stats and inventory</p>
         </a>

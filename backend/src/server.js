@@ -7,7 +7,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { OAuth2Client } from 'google-auth-library';
 import pool from "./config/db.js"; 
-import fs from 'fs'; // Moved import to the top
+import fs from 'fs';
 
 // --- Route Imports ---
 import menuRoutes from "./routes/menuRoutes.js";
@@ -31,13 +31,20 @@ app.use(cors({
 app.use(express.json());
 
 // --- 2. Google OAuth Configuration ---
-const CLIENT_ID = "2055879532-b174qi00vahh6i55j79m27je0bkeosjq.apps.googleusercontent.com";
-const client = new OAuth2Client(CLIENT_ID);
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "2055879532-b174qi00vahh6i55j79m27je0bkeosjq.apps.googleusercontent.com";
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+
+// Initialize with the secret included
+const client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET);
 
 // --- 3. Auth Routes ---
 
-// ADDED: This handles the click from the PortalPage Manager/Cashier buttons
+/**
+ * Initiates the Google OAuth flow.
+ * Captures the 'state' (the intended page like /kitchen) to pass to Google.
+ */
 app.get("/auth/google", (req, res) => {
+    const { state } = req.query; // Capture /kitchen, /manager, etc.
     const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
     const options = {
         redirect_uri: `${process.env.BACKEND_URL || 'http://localhost:8080'}/auth/google/callback`,
@@ -45,6 +52,7 @@ app.get("/auth/google", (req, res) => {
         access_type: 'offline',
         response_type: 'code',
         prompt: 'consent',
+        state: state || '/manager', // Pass intent to Google
         scope: [
             'https://www.googleapis.com/auth/userinfo.profile',
             'https://www.googleapis.com/auth/userinfo.email',
@@ -54,13 +62,47 @@ app.get("/auth/google", (req, res) => {
     res.redirect(`${rootUrl}?${queryString}`);
 });
 
-// ADDED: This handles the return trip from Google
-app.get("/auth/google/callback", (req, res) => {
-    // For local dev/testing: redirect user back to frontend after auth
-    res.redirect(allowedOrigin); 
+/**
+ * Handles the return trip from Google.
+ * Receives the auth code and the original state (destination).
+ */
+app.get("/auth/google/callback", async (req, res) => {
+    const { code, state } = req.query; // State is the destination
+    try {
+        // 1. Exchange the code for a token
+        const { tokens } = await client.getToken({
+            code,
+            redirect_uri: `${process.env.BACKEND_URL || 'http://localhost:8080'}/auth/google/callback`
+        });
+        
+        // 2. Get user info from the token
+        const ticket = await client.verifyIdToken({
+            idToken: tokens.id_token,
+            audience: CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        
+        // 3. Determine Role
+        const managers = ["ok.samgarces@gmail.com", "reveille.bubbletea@gmail.com", "ibrahimerandhawa@gmail.com", "4andrew.siv@gmail.com", "christianb62791@gmail.com", "rch27@tamu.edu"];
+        const cashiers = ["purigarv@tamu.edu", "cqb.23000@tamu.edu", "andrewsiv14@tamu.edu", "garcesam0@tamu.edu", "ibrahime@tamu.edu"];
+        
+        let role = "customer";
+        if (managers.includes(payload.email)) role = "manager";
+        else if (cashiers.includes(payload.email)) role = "cashier";
+
+        // 4. Redirect to frontend with role AND destination (dest)
+        const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+        res.redirect(`${frontendUrl}/login-success?role=${role}&name=${payload.given_name}&id=${payload.sub}&dest=${state}`);
+        
+    } catch (err) {
+        console.error("Callback Error:", err);
+        res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/portal`);
+    }
 });
 
-// Existing POST route for Customer Login
+/**
+ * POST route for Customer Login (Popup method)
+ */
 app.post("/api/auth/google", async (req, res) => {
     const { token } = req.body;
     try {
@@ -138,7 +180,6 @@ const buildPath = path.join(__dirname, "../../frontend/dist");
 
 if (fs.existsSync(buildPath)) {
     app.use(express.static(buildPath));
-    // Updated Regex: only redirect if it doesn't start with /api OR /auth
     app.get(/^(?!\/api|\/auth).+/, (req, res) => {
         res.sendFile(path.join(buildPath, "index.html"));
     });

@@ -1,26 +1,26 @@
-import { BrowserRouter, Route, Routes, Link } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import PortalPage from "./pages/PortalPage"; 
 import CustomerPage from "./pages/CustomerPage";
 import KitchenPage from "./pages/KitchenPage";
 import MenuBoardPage from "./pages/MenuBoardPage";
 import CashierPage from "./pages/CashierPage";
+import LoginSuccess from "./pages/LoginSuccess";
 import ManagerDashboard from "./components/ManagerDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-/**
- * Main Application Component
- * Handles routing for the POS system.
- */
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Publicly accessible routes */}
+        {/* Portal access via root or /portal */}
         <Route path="/" element={<PortalPage />} />
+        <Route path="/portal" element={<PortalPage />} />
+
+        {/* Public Routes */}
         <Route path="/customer" element={<CustomerPage />} />
         <Route path="/menuboard" element={<MenuBoardPage />} />
 
-        {/* 2. Protected Manager/Kitchen routes */}
+        {/* Protected Manager/Kitchen routes */}
         <Route 
           path="/manager" 
           element={
@@ -39,7 +39,7 @@ export default function App() {
           } 
         />
 
-        {/* 3. Protected Cashier route */}
+        {/* Protected Cashier route */}
         <Route 
           path="/cashierpage" 
           element={
@@ -48,7 +48,10 @@ export default function App() {
             </ProtectedRoute>
           } 
         /> 
-        
+
+        {/* Catch the backend redirect */}
+        <Route path="/login-success" element={<LoginSuccess />} />
+
       </Routes>
     </BrowserRouter>
   );
