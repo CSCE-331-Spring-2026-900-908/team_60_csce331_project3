@@ -7,6 +7,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { OAuth2Client } from 'google-auth-library';
 import pool from "./config/db.js"; 
+import fs from 'fs'; // Moved import to the top
 
 // --- Route Imports ---
 import menuRoutes from "./routes/menuRoutes.js";
@@ -19,11 +20,11 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// --- 1. Middleware & CORS (CRITICAL FOR RENDER) ---
+// --- 1. Middleware & CORS ---
 const allowedOrigin = process.env.CLIENT_URL || "http://localhost:5173";
 app.use(cors({
   origin: allowedOrigin,
-  credentials: true, // This allows Google OAuth session cookies to pass
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -33,7 +34,33 @@ app.use(express.json());
 const CLIENT_ID = "2055879532-b174qi00vahh6i55j79m27je0bkeosjq.apps.googleusercontent.com";
 const client = new OAuth2Client(CLIENT_ID);
 
-// --- 3. Auth Route (With Loyalty Upsert) ---
+// --- 3. Auth Routes ---
+
+// ADDED: This handles the click from the PortalPage Manager/Cashier buttons
+app.get("/auth/google", (req, res) => {
+    const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+    const options = {
+        redirect_uri: `${process.env.BACKEND_URL || 'http://localhost:8080'}/auth/google/callback`,
+        client_id: CLIENT_ID,
+        access_type: 'offline',
+        response_type: 'code',
+        prompt: 'consent',
+        scope: [
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email',
+        ].join(' '),
+    };
+    const queryString = new URLSearchParams(options).toString();
+    res.redirect(`${rootUrl}?${queryString}`);
+});
+
+// ADDED: This handles the return trip from Google
+app.get("/auth/google/callback", (req, res) => {
+    // For local dev/testing: redirect user back to frontend after auth
+    res.redirect(allowedOrigin); 
+});
+
+// Existing POST route for Customer Login
 app.post("/api/auth/google", async (req, res) => {
     const { token } = req.body;
     try {
@@ -46,7 +73,6 @@ app.post("/api/auth/google", async (req, res) => {
         const googleId = payload.sub;
         const fullName = payload.name;
 
-        // Whitelists
         const managers = ["ok.samgarces@gmail.com", "reveille.bubbletea@gmail.com", "ibrahimerandhawa@gmail.com", "4andrew.siv@gmail.com", "christianb62791@gmail.com", "rch27@tamu.edu"];
         const cashiers = ["purigarv@tamu.edu", "cqb.23000@tamu.edu", "andrewsiv14@tamu.edu", "garcesam0@tamu.edu", "ibrahime@tamu.edu"];
 
@@ -54,7 +80,6 @@ app.post("/api/auth/google", async (req, res) => {
         if (managers.includes(userEmail)) role = "manager";
         else if (cashiers.includes(userEmail)) role = "cashier";
 
-        // Logic for Customer Loyalty (Feature 3)
         if (role === "customer") {
             await pool.query(
                 `INSERT INTO public.customers (customer_id, name, stamps, lucky_draw_eligible, reward_points) 
@@ -62,7 +87,6 @@ app.post("/api/auth/google", async (req, res) => {
                 [googleId, fullName]
             );
         }
-
         res.json({ success: true, role, name: fullName.split(' ')[0], customer_id: googleId });
     } catch (err) {
         res.status(401).json({ error: "Invalid Token" });
@@ -78,23 +102,54 @@ app.use("/api/reports", reportRoutes);
 
 // --- 5. AI Chat & Weather ---
 app.post("/api/chat", async (req, res) => {
-    // ... keep your existing Groq logic from app.js ...
+  const apiKey = process.env.GROQ_API_KEY;
+  const url = "https://api.groq.com/openai/v1/chat/completions";
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: "You are Reveille-Bot. Personality: Energetic, polite, Aggie pride ('Howdy', 'Gig 'em')." },
+          { role: "user", content: req.body.message }
+        ]
+      })
+    });
+    const data = await response.json();
+    res.json({ reply: data.choices[0].message.content });
+  } catch (error) {
+    res.status(500).json({ error: "AI error" });
+  }
 });
 
 app.get("/api/weather", async (req, res) => {
-    // ... keep your existing Open-Meteo logic from app.js ...
+  try {
+    const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=30.628&longitude=-96.334&current=temperature_2m&temperature_unit=fahrenheit");
+    const data = await response.json();
+    res.json({ temp: Math.round(data.current.temperature_2m) });
+  } catch (error) {
+    res.status(500).json({ error: "Weather unavailable" });
+  }
 });
 
-// --- 6. Deployment Logic (Serving Frontend) ---
+// --- 6. Deployment Logic ---
 const buildPath = path.join(__dirname, "../../frontend/dist");
-app.use(express.static(buildPath));
-app.get(/^(?!\/api).+/, (req, res) => {
-    res.sendFile(path.join(buildPath, "index.html"));
-});
+
+if (fs.existsSync(buildPath)) {
+    app.use(express.static(buildPath));
+    // Updated Regex: only redirect if it doesn't start with /api OR /auth
+    app.get(/^(?!\/api|\/auth).+/, (req, res) => {
+        res.sendFile(path.join(buildPath, "index.html"));
+    });
+} else {
+    app.get("/", (req, res) => {
+        res.send("Backend is running. Please run 'npm run dev' in the frontend folder.");
+    });
+}
 
 // --- 7. Server Start ---
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Aura Backend running on port ${PORT}`);
-    console.log(`👉 Accepting requests from: ${allowedOrigin}`);
 });

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",
+    "cors": "^2.8.6",
     "jwt-decode": "^4.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -29,4 +30,3 @@
     "vite": "^8.0.1"
   }
 }
-

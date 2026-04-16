@@ -5,13 +5,17 @@ import Weather from '../components/Weather';
 import { GoogleLogin } from '@react-oauth/google';
 
 export default function CustomerPage() {
+  // --- DYNAMIC URL LOGIC ---
+  const VITE_URL = import.meta.env.VITE_API_URL;
+  const API_BASE = VITE_URL ? `${VITE_URL}/api` : "http://localhost:8080/api";
+
   // --- Main state ---
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [message, setMessage] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   
-  // --- Loyalty & Auth State (Feature 3) ---
+  // --- Loyalty & Auth State ---
   const [currentUser, setCurrentUser] = useState(null); 
 
   // --- Modal & Environment State ---
@@ -41,32 +45,32 @@ export default function CustomerPage() {
     loadMenu();
   }, []);
 
-  // Weather fetch
+  // FIXED: Dynamic Weather fetch
   useEffect(() => {
-    fetch("http://localhost:8080/api/weather")
+    fetch(`${API_BASE}/weather`)
       .then(res => res.json())
       .then(data => setWeatherTemp(data.temp))
       .catch(err => console.error("Weather fetch failed:", err));
-  }, []);
+  }, [API_BASE]);
 
-  // --- Auth Handlers ---
+  // FIXED: Dynamic Auth Handler with Credentials
   const handleLoginSuccess = async (credentialResponse) => {
     try {
       const token = credentialResponse.credential;
-      const res = await fetch("http://localhost:8080/api/auth/google", {
+      const res = await fetch(`${API_BASE}/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token })
+        body: JSON.stringify({ token }),
+        credentials: "include" // CRITICAL: This saves your session cookie on Render
       });
       const data = await res.json();
       
       if (data.success) {
-        // We include the stamps from the database here
         setCurrentUser({
           name: data.name,
           customer_id: data.customer_id,
           role: data.role,
-          stamps: data.stamps || 0 // Added this so bar shows on login
+          stamps: data.stamps || 0 
         });
         setMessage(`welcome, ${data.name}! loyalty mode active.`);
       }
@@ -76,7 +80,7 @@ export default function CustomerPage() {
     }
   };
 
-  // --- Helper Logic ---
+  // --- Helper Logic (Identical to your original) ---
   const getCleanCat = (item) => item.category ? item.category.toString().trim().toLowerCase() : "";
 
   const toppingsOptions = useMemo(() => 
@@ -110,7 +114,7 @@ export default function CustomerPage() {
     }, 0), 
   [cart]);
 
-  // --- Gacha ---
+  // --- Gacha logic (Identical to your original) ---
   const handleGachaRoll = () => {
     if (gachaRolls <= 0 || gachaSpinning) return;
     setGachaSpinning(true);
@@ -133,7 +137,7 @@ export default function CustomerPage() {
     }, 1500);
   };
 
-  // --- Cart/Modal ---
+  // --- Cart/Modal functions (Identical to your original) ---
   function openToppings(item) {
     setPendingItem(item);
     setSelectedToppings([]); 
@@ -173,7 +177,7 @@ export default function CustomerPage() {
     ).filter(item => item.quantity > 0));
   }
 
-  // --- ORDER PLACEMENT (Feature 3 Hook) ---
+  // FIXED: uses fixed placeOrder from api.js
   async function handlePlaceOrder() {
     if (cart.length === 0) return;
     
@@ -195,13 +199,9 @@ export default function CustomerPage() {
         customer_id: currentUser?.customer_id,
         is_redemption: isRedeeming
       });
-
-      // --- THE UI FIX STARTS HERE ---
       
-      // 1. Clear the cart for everyone
       setCart([]);
 
-      // 2. Build the message based on who the user is
       if (currentUser) {
         if (isRedeeming) {
           setMessage(`✨ REWARD REDEEMED! Order #${result.order_id} success! ✨`);
@@ -212,11 +212,9 @@ export default function CustomerPage() {
           setCurrentUser(prev => ({ ...prev, stamps: (prev.stamps || 0) + result.stamps_earned }));
         }
       } else {
-        // This is for the GUESTS (not logged in)
         setMessage(`success! order #${result.order_id} is being prepared.`);
       }
 
-      // 3. Clear the notification after 8 seconds
       setTimeout(() => setMessage(""), 8000); 
 
     } catch (err) {
@@ -225,6 +223,7 @@ export default function CustomerPage() {
     }
   }
 
+  // --- RENDERING (Identical to your original styling) ---
   return (
     <div style={auraContainer}>
       <Link to="/" style={backButtonStyle}>← portal</Link>
@@ -275,7 +274,7 @@ export default function CustomerPage() {
         {activeCategory === "recommended" && weatherTemp !== null && (
           <div style = {{ gridColumn: "1/ -1", textAlign: "center", marginBottom: "1rem" }}>
             <span style ={{
-              background: weatherTemp >= 70 ? "#e0f2fe" : "#fce7f3",
+              background: weatherTemp >= tempInflectionPoint ? "#e0f2fe" : "#fce7f3",
               color: weatherTemp >= 70 ? "#0369a1" : "#9d174d",
               padding: "8px 24px",
               borderRadius: "50px",
@@ -358,7 +357,6 @@ export default function CustomerPage() {
 
           {cart.length > 0 && (
             <div style={checkoutArea}>
-              {/* LOYALTY SECTION */}
               <div style={loyaltyBanner}>
                 {currentUser ? (
                   <div style={{ textAlign: 'center' }}>
@@ -368,7 +366,6 @@ export default function CustomerPage() {
                         {currentUser.name.toLowerCase()}'s card: {currentUser.stamps || 0} / 10
                       </span>
                     </div>
-                    {/* PROGRESS BAR */}
                     <div style={progressBg}>
                       <div style={progressBar(currentUser.stamps || 0)}></div>
                     </div>
@@ -394,14 +391,14 @@ export default function CustomerPage() {
 
               <div style={auraTotalRow}><span>total</span><span>${totalAmount.toFixed(2)}</span></div>
               <button 
-  style={{
-    ...auraCheckoutBtn, 
-    backgroundColor: (currentUser && currentUser.stamps >= 10) ? '#f59e0b' : '#1b4332'
-  }} 
-  onClick={handlePlaceOrder}
->
-  {(currentUser && currentUser.stamps >= 10) ? "🎁 redeem free drink" : "checkout"}
-</button>
+                style={{
+                  ...auraCheckoutBtn, 
+                  backgroundColor: (currentUser && currentUser.stamps >= 10) ? '#f59e0b' : '#1b4332'
+                }} 
+                onClick={handlePlaceOrder}
+              >
+                {(currentUser && currentUser.stamps >= 10) ? "🎁 redeem free drink" : "checkout"}
+              </button>
             </div>
           )}
         </aside>
@@ -409,6 +406,7 @@ export default function CustomerPage() {
     </div>
   );
 }
+
 
 // --- STYLES ---
 const auraContainer = { backgroundColor: "#e8f5e9", color: "#1b4332", minHeight: "100vh", padding: "2rem", position: 'relative' };
