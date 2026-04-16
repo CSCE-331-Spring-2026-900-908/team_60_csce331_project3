@@ -2,12 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aura Boba</title> <script>
+    <title>Aura Boba</title>
+
+    <style>
+      /* Pins the translate button so it doesn't push the boba menu down */
+      #translate_element {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        z-index: 9999;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 4px;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+
+      /* Cleans up the widget appearance for a professional kiosk look */
+      .goog-logo-link { display: none !important; }
+      .goog-te-gadget { color: transparent !important; }
+      .goog-te-banner-frame.skiptranslate { display: none !important; }
+      body { top: 0px !important; }
+    </style>
+
+    <script>
       function googleTranslateElementInit(){
         new google.translate.TranslateElement(
-          { pageLanguage: 'en', includedLanguages: 'es'}, 
+          { 
+            pageLanguage: 'en', 
+            includedLanguages: 'es',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE 
+          }, 
           'translate_element'
         );
       }
@@ -18,6 +46,7 @@
     <div id="translate_element"></div>
     
     <div id="root"></div>
+    
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
