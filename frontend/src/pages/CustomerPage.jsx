@@ -39,11 +39,7 @@ export default function CustomerPage() {
   }, []);
 
   useEffect(() => {
-<<<<<<< HEAD
-    fetch("${API_BASE}/weather")
-=======
     fetch(`${API_BASE}/weather`)
->>>>>>> sam
       .then(res => res.json())
       .then(data => setWeatherTemp(data.temp))
       .catch(err => console.error("Weather fetch failed:", err));
@@ -55,11 +51,7 @@ export default function CustomerPage() {
   const handleLoginSuccess = async (credentialResponse) => {
     try {
       const token = credentialResponse.credential;
-<<<<<<< HEAD
-      const res = await fetch("${API_BASE}/auth/google", {
-=======
       const res = await fetch(`${API_BASE}/auth/google`, {
->>>>>>> sam
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
