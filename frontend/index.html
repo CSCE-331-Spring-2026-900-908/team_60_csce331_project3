@@ -2,90 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aura Boba Frontend</title>
-
-    <style>
-      :root {
-        --boba-purple: #d1c4e9;
-        --boba-cream: #fdf5e6;
-        --boba-pearl: #4a3728;
-      }
-
-      /* 1. Hide the Google Branding & Logo */
-      .goog-logo-link, .goog-te-gadget span, .goog-te-banner-frame {
-        display: none !important;
-      }
-      .goog-te-gadget {
-        color: transparent !important;
-        font-size: 0 !important;
-      }
-
-      /* 2. Style the Wrapper to look like a Pearl */
-      #translate_wrapper {
-        display: inline-flex;
-        align-items: center;
-        background-color: var(--boba-cream);
-        border: 2px solid var(--boba-purple);
-        border-radius: 50px;
-        padding: 5px 15px;
-        height: 40px;
-        overflow: hidden;
-      }
-
-      /* 3. The Initials Trick */
-      /* We hide the long text and show the value instead */
-      .goog-te-combo {
-        background: transparent !important;
-        border: none !important;
-        color: var(--boba-pearl) !important;
-        font-family: 'Inter', sans-serif;
-        font-weight: 800;
-        text-transform: uppercase;
-        cursor: pointer;
-        outline: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        /* Customizing appearance to look more like a simple 'EN' or 'ES' */
-        appearance: none; 
-        -webkit-appearance: none;
-      }
-
-      /* Clean up the body shift Google creates */
-      body { top: 0 !important; }
-    </style>
-  </head>
-  <body>
-
-    <div id="translate_wrapper">
-      <div id="translate_element"></div>
-    </div>
-
-    <script>
-      function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-          pageLanguage: 'en',
-          includedLanguages: 'en,es', // Add more codes here if needed
-          layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-          autoDisplay: false
-        }, 'translate_element');
-
-        // Optional: Polling to shorten the text names once Google loads them
-        const checkInterval = setInterval(() => {
-          const combo = document.querySelector('.goog-te-combo');
-          if (combo) {
-            // This loop renames 'English' to 'EN' and 'Spanish' to 'ES' in the dropdown
-            Array.from(combo.options).forEach(option => {
-              if (option.text === 'English') option.text = 'EN';
-              if (option.text === 'Spanish') option.text = 'ES';
-            });
-            clearInterval(checkInterval);
-          }
-        }, 100);
+    <title>Aura Boba</title> <script>
+      function googleTranslateElementInit(){
+        new google.translate.TranslateElement(
+          { pageLanguage: 'en', includedLanguages: 'es'}, 
+          'translate_element'
+        );
       }
     </script>
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
+    <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  </head>
+  <body>
+    <div id="translate_element"></div>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
