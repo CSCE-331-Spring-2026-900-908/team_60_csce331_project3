@@ -91,6 +91,16 @@ router.post('/z-report', async (req, res) => {
     }
 });
 
+router.get('/sales-summary', async (req, res) => {
+  try {
+    const sql = `SELECT COUNT(*) as total_orders, SUM(total_amount) as total_revenue FROM orders`;
+    const result = await pool.query(sql);
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch sales summary' });
+  }
+});
+
 router.get('/usage', async (req, res) => {
   try {
     const { startDay, endDay, startTime, endTime } = req.query;

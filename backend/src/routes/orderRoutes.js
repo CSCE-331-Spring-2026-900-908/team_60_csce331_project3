@@ -3,6 +3,10 @@ import pool from "../config/db.js";
 
 const router = express.Router();
 
+/**
+ * GET /api/orders
+ * Fetches pending orders for the Kitchen view.
+ */
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -13,9 +17,9 @@ router.get("/", async (req, res) => {
         o."time" AS order_time,
         mi.name AS item_name,
         oi.quantity
-      FROM orders o
-      LEFT JOIN orderitems oi ON o.order_id = oi.order_id
-      LEFT JOIN menuitems mi ON oi.menu_item_id = mi.menu_item_id
+      FROM public.orders o
+      LEFT JOIN public.orderitems oi ON o.order_id = oi.order_id
+      LEFT JOIN public.menuitems mi ON oi.menu_item_id = mi.menu_item_id
       WHERE o.status = 'pending'
       ORDER BY o.order_id ASC
     `);
@@ -32,10 +36,7 @@ router.get("/", async (req, res) => {
         };
       }
       if (row.item_name) {
-        ordersMap[row.order_id].items.push({
-          name: row.item_name,
-          quantity: row.quantity
-        });
+        ordersMap[row.order_id].items.push({ name: row.item_name, quantity: row.quantity });
       }
     });
 
@@ -46,104 +47,70 @@ router.get("/", async (req, res) => {
   }
 });
 
+/**
+ * POST /api/orders
+ * Handles order placement, stamp increments, and reward redemptions.
+ */
 router.post("/", async (req, res) => {
   const client = await pool.connect();
   try {
     const { total_amount, items, customer_id, is_redemption } = req.body; 
     
-    // Force ID to string and log it for debugging
-    const finalCustomerId = (customer_id && customer_id !== "undefined") ? String(customer_id) : "1";
-    console.log(`📦 Processing Order for Customer: ${finalCustomerId} | Redemption: ${!!is_redemption}`);
+    // Ensure customer_id is treated as a String for Google IDs
+    const finalCustomerId = (customer_id && customer_id !== "undefined" && customer_id !== "null") 
+      ? String(customer_id) 
+      : "1";
 
     await client.query('BEGIN');
 
-    // 1. Insert Order - Using LOCALTIME and CURRENT_DATE for database compatibility
+    // 1. Create the Order
     const orderResult = await client.query(
       `INSERT INTO public.orders (customer_id, employee_id, date, status, total_amount, time, z_reported) 
        VALUES ($1, 1, CURRENT_DATE, 'pending', $2, LOCALTIME, false) 
        RETURNING order_id`,
       [finalCustomerId, Number(total_amount)]
     );
-    
     const newOrderId = orderResult.rows[0].order_id;
 
-    // 2. Insert Items (Manual ID increment logic preserved)
+    // 2. Handle Order Items
     const maxIdResult = await client.query("SELECT COALESCE(MAX(order_item_id), 0) AS max_id FROM public.orderitems");
     let currentItemId = parseInt(maxIdResult.rows[0].max_id, 10);
 
-    if (items && items.length > 0) {
-      for (const item of items) {
-        currentItemId++; 
-        await client.query(
-          'INSERT INTO public.orderitems (order_item_id, order_id, menu_item_id, quantity, price) VALUES ($1, $2, $3, $4, $5)',
-          [currentItemId, newOrderId, item.menu_item_id, item.quantity, item.price || 0]
-        );
-      }
+    for (const item of items) {
+      currentItemId++; 
+      await client.query(
+        'INSERT INTO public.orderitems (order_item_id, order_id, menu_item_id, quantity, price) VALUES ($1, $2, $3, $4, $5)',
+        [currentItemId, newOrderId, item.menu_item_id, item.quantity || 1, item.price || 0]
+      );
     }
 
-    // 3. Loyalty Logic (Feature 3)
-    let stampsEarned = 0;
-    let isLucky = false;
-
+    // 3. Aura Boba Stamp Logic
     if (finalCustomerId !== "1") {
-      if (is_redemption === true || is_redemption === 'true') {
-        // --- REDEEM MODE: Subtract 10 stamps ---
+      if (is_redemption) {
+        // Reset stamps to 0 or subtract 10, ensuring they don't go below 0
         await client.query(
-          `UPDATE customers SET stamps = stamps - 10 WHERE customer_id = $1`,
+          `UPDATE public.customers SET stamps = GREATEST(stamps - 10, 0) WHERE customer_id = $1`, 
           [finalCustomerId]
         );
-        console.log(`🎁 Reward Redeemed: -10 stamps for ${finalCustomerId}`);
       } else {
-        // --- EARN MODE: Standard Stamp Logic (20% Double Stamp chance) ---
-        stampsEarned = 1;
-        const roll = Math.random();
-        if (roll <= 0.20) {
-          stampsEarned = 2;
-          isLucky = true;
-        }
-
+        // Standard purchase: 1 stamp, with a 20% chance for a bonus
+        let stampsEarned = Math.random() <= 0.20 ? 2 : 1;
         await client.query(
-          `UPDATE customers SET stamps = stamps + $1, lucky_draw_eligible = true WHERE customer_id = $2`,
+          `UPDATE public.customers SET stamps = stamps + $1 WHERE customer_id = $2`, 
           [stampsEarned, finalCustomerId]
         );
-        console.log(`⭐ Stamps Updated: +${stampsEarned} for ${finalCustomerId}`);
       }
     }
 
     await client.query('COMMIT');
-
-    // 4. Return complete status to frontend
-    res.status(201).json({ 
-      order_id: newOrderId,
-      status: 'pending',
-      stamps_earned: stampsEarned,
-      is_lucky: isLucky,
-      is_redemption: !!is_redemption
-    });
+    res.status(201).json({ order_id: newOrderId });
 
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error("❌ CRITICAL ORDER ERROR:", err.message);
+    console.error("ORDER POST ERROR:", err.message);
     res.status(500).json({ error: err.message });
   } finally {
     client.release();
-  }
-});
-
-router.put("/:orderId", async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const { status } = req.body;
-
-    await pool.query(
-      "UPDATE public.orders SET status = $1 WHERE order_id = $2",
-      [status, orderId]
-    );
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("UPDATE STATUS ERROR:", err.message);
-    res.status(500).json({ error: "Failed to update order status" });
   }
 });
 

@@ -6,29 +6,25 @@ import { GoogleLogin } from '@react-oauth/google';
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 export default function CustomerPage() {
-  // --- Main state ---
+  // --- DYNAMIC URL LOGIC ---
+  const VITE_URL = import.meta.env.VITE_API_URL;
+  const API_BASE = VITE_URL ? `${VITE_URL}/api` : "http://localhost:8080/api";
+
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [message, setMessage] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
-  
-  // --- Loyalty & Auth State (Feature 3) ---
   const [currentUser, setCurrentUser] = useState(null); 
-
-  // --- Modal & Environment State ---
   const [showToppings, setShowToppings] = useState(false);
   const [pendingItem, setPendingItem] = useState(null);
   const [selectedToppings, setSelectedToppings] = useState([]);
   const [weatherTemp, setWeatherTemp] = useState(null); 
-
-  // --- Gacha State ---
   const [gachaResult, setGachaResult] = useState(null);
   const [gachaRolls, setGachaRolls] = useState(3);
   const [gachaSpinning, setGachaSpinning] = useState(false);
 
   const tempInflectionPoint = 60; 
 
-  // Load menu
   useEffect(() => {
     async function loadMenu() {
       try {
@@ -42,34 +38,43 @@ export default function CustomerPage() {
     loadMenu();
   }, []);
 
-  // Weather fetch
   useEffect(() => {
+<<<<<<< HEAD
     fetch("${API_BASE}/weather")
+=======
+    fetch(`${API_BASE}/weather`)
+>>>>>>> sam
       .then(res => res.json())
       .then(data => setWeatherTemp(data.temp))
       .catch(err => console.error("Weather fetch failed:", err));
-  }, []);
+  }, [API_BASE]);
 
-  // --- Auth Handlers ---
+  /**
+   * FIXED: Google Login now correctly saves the stamp count returned by the new backend.
+   */
   const handleLoginSuccess = async (credentialResponse) => {
     try {
       const token = credentialResponse.credential;
+<<<<<<< HEAD
       const res = await fetch("${API_BASE}/auth/google", {
+=======
+      const res = await fetch(`${API_BASE}/auth/google`, {
+>>>>>>> sam
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token })
+        body: JSON.stringify({ token }),
       });
       const data = await res.json();
       
       if (data.success) {
-        // We include the stamps from the database here
+        // Save to state so the UI updates and the order logic sees the ID
         setCurrentUser({
           name: data.name,
           customer_id: data.customer_id,
           role: data.role,
-          stamps: data.stamps || 0 // Added this so bar shows on login
+          stamps: data.stamps || 0 
         });
-        setMessage(`welcome, ${data.name}! loyalty mode active.`);
+        setMessage(`welcome, ${data.name.toLowerCase()}! your stamps: ${data.stamps}/10`);
       }
     } catch (err) {
       console.error("Login Error:", err);
@@ -77,13 +82,62 @@ export default function CustomerPage() {
     }
   };
 
-  // --- Helper Logic ---
+  /**
+   * FIXED: handlePlaceOrder now includes the customer_id and is_redemption flag.
+   */
+  async function handlePlaceOrder() {
+    if (cart.length === 0) return;
+    
+    // Determine if the user is using their 10 stamps for a free drink
+    const isRedeeming = currentUser && currentUser.stamps >= 10;
+    const finalAmount = isRedeeming ? 0 : Number(totalAmount.toFixed(2));
+
+    try {
+      const flattenedItems = [];
+      cart.forEach(cartItem => {
+        for(let i=0; i < cartItem.quantity; i++) {
+          // If redeeming, items are effectively $0 for the order record
+          flattenedItems.push({ menu_item_id: cartItem.menu_item_id, price: isRedeeming ? 0 : cartItem.price });
+          cartItem.toppings.forEach(t => flattenedItems.push({ menu_item_id: t.menu_item_id, price: isRedeeming ? 0 : t.price }));
+        }
+      });
+
+      // Pass the finalCustomerId and redemption status to your updated orderRoutes.js
+      const result = await placeOrder({ 
+        items: flattenedItems, 
+        total_amount: finalAmount, 
+        customer_id: currentUser?.customer_id, // Pass Google ID
+        is_redemption: isRedeeming
+      });
+      
+      setCart([]);
+
+      if (currentUser) {
+        if (isRedeeming) {
+          setMessage(`✨ REWARD REDEEMED! Order #${result.order_id} success! ✨`);
+          // Optimistically update local state to reflect the 10-stamp deduction
+          setCurrentUser(prev => ({ ...prev, stamps: Math.max(0, prev.stamps - 10) }));
+        } else {
+          // Update stamps based on the result from the backend (handles 20% bonus)
+          const stampsGained = result.stamps_earned || 1;
+          setMessage(`Order #${result.order_id} success! +${stampsGained} stamp(s) added.`);
+          setCurrentUser(prev => ({ ...prev, stamps: (prev.stamps || 0) + stampsGained }));
+        }
+      } else {
+        setMessage(`success! order #${result.order_id} is being prepared.`);
+      }
+
+      setTimeout(() => setMessage(""), 8000); 
+
+    } catch (err) {
+      console.error("Order error:", err);
+      setMessage("failed to place order.");
+    }
+  }
+
+  // --- HELPER LOGIC ---
   const getCleanCat = (item) => item.category ? item.category.toString().trim().toLowerCase() : "";
-
-  const toppingsOptions = useMemo(() => 
-    menuItems.filter(item => getCleanCat(item) === 'topping'), 
-  [menuItems]);
-
+  const toppingsOptions = useMemo(() => menuItems.filter(item => getCleanCat(item) === 'topping'), [menuItems]);
   const categories = useMemo(() => {
     const rawCats = [...new Set(menuItems.map(item => getCleanCat(item)))];
     return ["all", "surprise me", "recommended", ...rawCats.filter(c => c !== 'topping' && c !== "")];
@@ -100,18 +154,13 @@ export default function CustomerPage() {
     return drinks.filter(item => getCleanCat(item) === activeCategory);
   }, [menuItems, activeCategory, weatherTemp]);
 
-  const totalItemsCount = useMemo(() => 
-    cart.reduce((sum, item) => sum + item.quantity, 0), 
-  [cart]);
-
-  const totalAmount = useMemo(() => 
-    cart.reduce((sum, item) => {
+  const totalItemsCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
+  const totalAmount = useMemo(() => cart.reduce((sum, item) => {
       const toppingTotal = item.toppings.reduce((s, t) => s + t.price, 0);
       return sum + (item.price + toppingTotal) * item.quantity;
-    }, 0), 
-  [cart]);
+    }, 0), [cart]);
 
-  // --- Gacha ---
+  // --- GACHA LOGIC ---
   const handleGachaRoll = () => {
     if (gachaRolls <= 0 || gachaSpinning) return;
     setGachaSpinning(true);
@@ -134,13 +183,7 @@ export default function CustomerPage() {
     }, 1500);
   };
 
-  // --- Cart/Modal ---
-  function openToppings(item) {
-    setPendingItem(item);
-    setSelectedToppings([]); 
-    setShowToppings(true);
-  }
-
+  function openToppings(item) { setPendingItem(item); setSelectedToppings([]); setShowToppings(true); }
   function toggleTopping(topping) {
     setSelectedToppings(prev => 
       prev.find(t => t.menu_item_id === topping.menu_item_id)
@@ -153,77 +196,14 @@ export default function CustomerPage() {
     const cartId = `${pendingItem.menu_item_id}-${selectedToppings.map(t => t.menu_item_id).sort().join('-')}`;
     setCart((prev) => {
       const existing = prev.find(x => x.cartId === cartId);
-      if (existing) {
-        return prev.map(x => x.cartId === cartId ? { ...x, quantity: x.quantity + 1 } : x);
-      }
-      return [...prev, {
-        cartId,
-        menu_item_id: pendingItem.menu_item_id,
-        name: pendingItem.name,
-        price: Number(pendingItem.base_price),
-        quantity: 1,
-        toppings: selectedToppings
-      }];
+      if (existing) return prev.map(x => x.cartId === cartId ? { ...x, quantity: x.quantity + 1 } : x);
+      return [...prev, { cartId, menu_item_id: pendingItem.menu_item_id, name: pendingItem.name, price: Number(pendingItem.base_price), quantity: 1, toppings: selectedToppings }];
     });
     setShowToppings(false);
   }
 
   function changeQuantity(cartId, delta) {
-    setCart(prev => prev.map(item => 
-      item.cartId === cartId ? { ...item, quantity: item.quantity + delta } : item
-    ).filter(item => item.quantity > 0));
-  }
-
-  // --- ORDER PLACEMENT (Feature 3 Hook) ---
-  async function handlePlaceOrder() {
-    if (cart.length === 0) return;
-    
-    const isRedeeming = currentUser && currentUser.stamps >= 10;
-    const finalAmount = isRedeeming ? 0 : Number(totalAmount.toFixed(2));
-
-    try {
-      const flattenedItems = [];
-      cart.forEach(cartItem => {
-        for(let i=0; i < cartItem.quantity; i++) {
-          flattenedItems.push({ menu_item_id: cartItem.menu_item_id, price: isRedeeming ? 0 : cartItem.price });
-          cartItem.toppings.forEach(t => flattenedItems.push({ menu_item_id: t.menu_item_id, price: isRedeeming ? 0 : t.price }));
-        }
-      });
-
-      const result = await placeOrder({ 
-        items: flattenedItems, 
-        total_amount: finalAmount, 
-        customer_id: currentUser?.customer_id,
-        is_redemption: isRedeeming
-      });
-
-      // --- THE UI FIX STARTS HERE ---
-      
-      // 1. Clear the cart for everyone
-      setCart([]);
-
-      // 2. Build the message based on who the user is
-      if (currentUser) {
-        if (isRedeeming) {
-          setMessage(`✨ REWARD REDEEMED! Order #${result.order_id} success! ✨`);
-          setCurrentUser(prev => ({ ...prev, stamps: prev.stamps - 10 }));
-        } else {
-          const stampMsg = result.is_lucky ? `✨ DOUBLE STAMPS! (+2) ✨` : `+1 stamp added. 🌿`;
-          setMessage(`Order #${result.order_id} success! ${stampMsg}`);
-          setCurrentUser(prev => ({ ...prev, stamps: (prev.stamps || 0) + result.stamps_earned }));
-        }
-      } else {
-        // This is for the GUESTS (not logged in)
-        setMessage(`success! order #${result.order_id} is being prepared.`);
-      }
-
-      // 3. Clear the notification after 8 seconds
-      setTimeout(() => setMessage(""), 8000); 
-
-    } catch (err) {
-      console.error("Order error:", err);
-      setMessage("failed to place order.");
-    }
+    setCart(prev => prev.map(item => item.cartId === cartId ? { ...item, quantity: item.quantity + delta } : item).filter(item => item.quantity > 0));
   }
 
   return (
@@ -275,17 +255,8 @@ export default function CustomerPage() {
       <div style={mainLayout}>
         {activeCategory === "recommended" && weatherTemp !== null && (
           <div style = {{ gridColumn: "1/ -1", textAlign: "center", marginBottom: "1rem" }}>
-            <span style ={{
-              background: weatherTemp >= 70 ? "#e0f2fe" : "#fce7f3",
-              color: weatherTemp >= 70 ? "#0369a1" : "#9d174d",
-              padding: "8px 24px",
-              borderRadius: "50px",
-              fontWeight: "700",
-              fontSize: "0.9rem"
-            }}>
-              {weatherTemp >= tempInflectionPoint
-               ? `It's ${weatherTemp}°F outside - perfect weather for something cold 🧊`
-               : `It's ${weatherTemp}°F outside - time to get something to warm up ☕! `}
+            <span style ={{ background: weatherTemp >= tempInflectionPoint ? "#e0f2fe" : "#fce7f3", color: weatherTemp >= 70 ? "#0369a1" : "#9d174d", padding: "8px 24px", borderRadius: "50px", fontWeight: "700", fontSize: "0.9rem" }}>
+              {weatherTemp >= tempInflectionPoint ? `It's ${weatherTemp}°F outside - perfect weather for something cold 🧊` : `It's ${weatherTemp}°F outside - time to get something to warm up ☕! `}
             </span>
           </div>
         )}
@@ -297,26 +268,17 @@ export default function CustomerPage() {
                 <h2 style={itemTitle}>aura <span style={{fontWeight:'300'}}>surprise</span></h2>
                 <p style={gachaSub}>let nature decide your drink</p>
               </div>
-
               {gachaResult ? (
                 <div style={{...resultBox, borderColor: gachaResult.rarityColor}}>
                   <div style={imageCircle}>✨</div>
                   <h3 style={{...itemTitle, color: gachaResult.rarityColor}}>{gachaResult.rarity}!</h3>
                   <p style={{fontWeight:'700', fontSize:'1.3rem', color: '#1b4332'}}>{gachaResult.name.toLowerCase()}</p>
-                  <button style={auraAddBtnLarge} onClick={() => openToppings(gachaResult)}>
-                    customize surprise — ${Number(gachaResult.price).toFixed(2)}
-                  </button>
+                  <button style={auraAddBtnLarge} onClick={() => openToppings(gachaResult)}>customize surprise — ${Number(gachaResult.price).toFixed(2)}</button>
                 </div>
               ) : (
-                <div style={emptyGacha}>
-                  <div style={{fontSize: '4rem', marginBottom: '1rem'}}>🎰</div>
-                  <p>you have {gachaRolls} spins remaining</p>
-                </div>
+                <div style={emptyGacha}><div style={{fontSize: '4rem', marginBottom: '1rem'}}>🎰</div><p>you have {gachaRolls} spins remaining</p></div>
               )}
-
-              <button style={gachaSpinBtn(gachaRolls > 0)} onClick={handleGachaRoll} disabled={gachaSpinning || gachaRolls <= 0}>
-                {gachaSpinning ? "🧋 spinning..." : gachaRolls > 0 ? `spin for surprise (${gachaRolls})` : "no spins left"}
-              </button>
+              <button style={gachaSpinBtn(gachaRolls > 0)} onClick={handleGachaRoll} disabled={gachaSpinning || gachaRolls <= 0}>{gachaSpinning ? "🧋 spinning..." : gachaRolls > 0 ? `spin for surprise (${gachaRolls})` : "no spins left"}</button>
             </div>
           </section>
         ) : (
@@ -340,7 +302,6 @@ export default function CustomerPage() {
             <h2 style={{ margin: 0, fontSize: '1.2rem' }}>your order</h2>
             <span style={countBadge}>{totalItemsCount}</span>
           </div>
-          
           <div style={cartScrollArea}>
             {cart.length === 0 ? <p style={emptyText}>basket is empty.</p> : cart.map((item) => (
               <div key={item.cartId} style={auraCartItem}>
@@ -359,7 +320,6 @@ export default function CustomerPage() {
 
           {cart.length > 0 && (
             <div style={checkoutArea}>
-              {/* LOYALTY SECTION */}
               <div style={loyaltyBanner}>
                 {currentUser ? (
                   <div style={{ textAlign: 'center' }}>
@@ -369,14 +329,9 @@ export default function CustomerPage() {
                         {currentUser.name.toLowerCase()}'s card: {currentUser.stamps || 0} / 10
                       </span>
                     </div>
-                    {/* PROGRESS BAR */}
-                    <div style={progressBg}>
-                      <div style={progressBar(currentUser.stamps || 0)}></div>
-                    </div>
+                    <div style={progressBg}><div style={progressBar(currentUser.stamps || 0)}></div></div>
                     {(currentUser.stamps || 0) >= 10 && (
-                        <p style={{ color: '#2d6a4f', fontSize: '0.7rem', fontWeight: '800', margin: '5px 0 0 0' }}>
-                          ✨ FREE DRINK READY! ✨
-                        </p>
+                        <p style={{ color: '#2d6a4f', fontSize: '0.7rem', fontWeight: '800', margin: '5px 0 0 0' }}>✨ FREE DRINK READY! ✨</p>
                     )}
                   </div>
                 ) : (
@@ -395,14 +350,14 @@ export default function CustomerPage() {
 
               <div style={auraTotalRow}><span>total</span><span>${totalAmount.toFixed(2)}</span></div>
               <button 
-  style={{
-    ...auraCheckoutBtn, 
-    backgroundColor: (currentUser && currentUser.stamps >= 10) ? '#f59e0b' : '#1b4332'
-  }} 
-  onClick={handlePlaceOrder}
->
-  {(currentUser && currentUser.stamps >= 10) ? "🎁 redeem free drink" : "checkout"}
-</button>
+                style={{
+                  ...auraCheckoutBtn, 
+                  backgroundColor: (currentUser && currentUser.stamps >= 10) ? '#f59e0b' : '#1b4332'
+                }} 
+                onClick={handlePlaceOrder}
+              >
+                {(currentUser && currentUser.stamps >= 10) ? "🎁 redeem free drink" : "checkout"}
+              </button>
             </div>
           )}
         </aside>
@@ -411,7 +366,7 @@ export default function CustomerPage() {
   );
 }
 
-// --- STYLES ---
+// --- STYLES (Kept Original Aura Styling) ---
 const auraContainer = { backgroundColor: "#e8f5e9", color: "#1b4332", minHeight: "100vh", padding: "2rem", position: 'relative' };
 const backButtonStyle = { position: 'absolute', top: '30px', left: '40px', zIndex: 100, textDecoration: 'none', color: '#1b4332', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(10px)', padding: '10px 22px', borderRadius: '50px', border: '1px solid rgba(27, 67, 50, 0.1)' };
 const auraHeader = { marginBottom: "3rem", marginTop: "40px" };
@@ -455,27 +410,7 @@ const emptyText = { textAlign: "center", color: "#94a3b8", marginTop: "2rem", fo
 const gachaSub = { color: '#2d6a4f', opacity: 0.6, fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '2px' };
 const gachaHeader = { marginBottom: '2rem' };
 const emptyGacha = { padding: '3rem 0', opacity: 0.5, fontWeight: '700' };
-
-// --- STYLES ---
-const loyaltyBanner = { 
-    marginBottom: '1.5rem', 
-    padding: '15px', 
-    borderRadius: '20px', 
-    background: '#f1f8f1', 
-    border: '1px solid #c8e6c9',
-    textAlign: 'center'
-};
-const activeDot = {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    backgroundColor: '#2d6a4f',
-    boxShadow: '0 0 8px #2d6a4f'
-};
+const loyaltyBanner = { marginBottom: '1.5rem', padding: '15px', borderRadius: '20px', background: '#f1f8f1', border: '1px solid #c8e6c9', textAlign: 'center' };
+const activeDot = { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2d6a4f', boxShadow: '0 0 8px #2d6a4f' };
 const progressBg = { height: '8px', background: '#e2e8f0', borderRadius: '10px', marginTop: '10px', overflow: 'hidden' };
-const progressBar = (stamps) => ({ 
-    height: '100%', 
-    width: `${Math.min((stamps % 11) * 10, 100)}%`, // Simplified Fill logic
-    background: '#2d6a4f', 
-    transition: 'width 0.5s ease-in-out' 
-});
+const progressBar = (stamps) => ({ height: '100%', width: `${Math.min((stamps) * 10, 100)}%`, background: '#2d6a4f', transition: 'width 0.5s ease-in-out' });

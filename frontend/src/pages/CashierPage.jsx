@@ -3,32 +3,35 @@ import { Link } from "react-router-dom";
 import '../App.css'; 
 
 const CashierPage = () => {
+    // --- DYNAMIC URL LOGIC ---
+    const VITE_URL = import.meta.env.VITE_API_URL;
+    const API_BASE = VITE_URL ? `${VITE_URL}/api` : "http://localhost:8080/api";
+
     const [menu, setMenu] = useState([]); 
     const [order, setOrder] = useState([]); 
     const [total, setTotal] = useState(0);
     const [selectedDrinkIdx, setSelectedDrinkIdx] = useState(null);
+
     const logoStyle = { 
         fontSize: '3.5rem', 
-        fontWeight: '800', // This makes "aura" thick
+        fontWeight: '800', 
         letterSpacing: '-1px', 
         margin: 0,
         color: '#1b4332',
         textTransform: 'lowercase' 
     };
 
+    // FIXED: Dynamic Menu fetch with Credentials
     useEffect(() => { 
-        fetch('http://localhost:8080/api/menu')
+        fetch(`${API_BASE}/menu`, { credentials: "include" })
             .then(res => res.json())
             .then(data => setMenu(data))
             .catch(err => console.error("Error fetching menu:", err));
-    }, []);
-
-
+    }, [API_BASE]);
 
     const drinks = useMemo(() => menu.filter(item => item.category?.toLowerCase().trim() !== 'topping'), [menu]);
     const toppingsOptions = useMemo(() => menu.filter(item => item.category?.toLowerCase().trim() === 'topping'), [menu]);
 
-    // Update the global total whenever the order array changes
     useEffect(() => {
         const newTotal = order.reduce((acc, item) => {
             const drinkBase = parseFloat(item.base_price) * item.quantity;
@@ -82,6 +85,7 @@ const CashierPage = () => {
         else if (selectedDrinkIdx > idx) setSelectedDrinkIdx(selectedDrinkIdx - 1);
     };
 
+    // FIXED: Dynamic Order submission with Credentials
     const submitOrder = async () => {
         if (order.length === 0) return;
         const flattenedItems = [];
@@ -102,10 +106,11 @@ const CashierPage = () => {
         };
 
         try {
-            const response = await fetch('http://localhost:8080/api/orders', {
+            const response = await fetch(`${API_BASE}/orders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData)
+                body: JSON.stringify(orderData),
+                credentials: "include" // CRITICAL for Render sessions
             });
             if (response.ok) {
                 alert("Order finalized.");
@@ -117,7 +122,6 @@ const CashierPage = () => {
 
     return (
         <div style={auraContainer}>
-            {/* Standardized Absolute Back Button - Matches Customer Page exactly */}
             <Link to="/" style={backBtnStyle}>← portal</Link>
 
             <header style={auraHeader}>
@@ -127,7 +131,6 @@ const CashierPage = () => {
             </header>
 
             <div style={mainLayout}>
-                {/* 1. Drinks */}
                 <div style={glassPanel}>
                     <h2 style={panelTitle}>Beverages</h2>
                     <div style={grid}>
@@ -140,7 +143,6 @@ const CashierPage = () => {
                     </div>
                 </div>
 
-                {/* 2. Toppings */}
                 <div style={glassPanel}>
                     <h2 style={panelTitle}>Add-ons</h2>
                     <p style={selectionLabel}>
@@ -164,7 +166,6 @@ const CashierPage = () => {
                     </div>
                 </div>
 
-                {/* 3. Basket with Qty & Delete */}
                 <div style={cartPanel}>
                     <div style={{padding:'20px', flex:1, overflowY:'auto'}}>
                         <h2 style={{...panelTitle, color:'white'}}>Basket</h2>
@@ -203,33 +204,11 @@ const CashierPage = () => {
     );
 };
 
-// --- STYLES ---
+// STYLES
 const auraContainer = { background:'#e8f5e9', height:'100vh', padding:'2rem', fontFamily:'"Inter", sans-serif', color:'#1b4332', display:'flex', flexDirection:'column', position: 'relative' };
 const auraHeader = { marginBottom: "3rem", marginTop: "40px" };
 const logoStyle = { fontSize:'3.5rem', fontWeight:'800', letterSpacing:'-1px', margin: 0 };
-
-const backBtnStyle = {
-    position: 'absolute',
-    top: '30px',
-    left: '40px',
-    zIndex: 100,
-    textDecoration: 'none',
-    color: '#1b4332',
-    fontSize: '0.75rem',
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: '1px',
-    background: 'rgba(255, 255, 255, 0.5)',
-    backdropFilter: 'blur(10px)',
-    padding: '10px 22px',
-    borderRadius: '50px',
-    border: '1px solid rgba(27, 67, 50, 0.1)',
-    transition: 'all 0.2s ease',
-    display: 'flex',
-    alignItems: 'center',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.02)'
-};
-
+const backBtnStyle = { position: 'absolute', top: '30px', left: '40px', zIndex: 100, textDecoration: 'none', color: '#1b4332', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(10px)', padding: '10px 22px', borderRadius: '50px', border: '1px solid rgba(27, 67, 50, 0.1)', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' };
 const mainLayout = { display:'grid', gridTemplateColumns:'1fr 1fr 400px', gap:'20px', flex:1, overflow:'hidden', paddingBottom:'20px' };
 const glassPanel = { background:'rgba(255,255,255,0.4)', backdropFilter:'blur(10px)', borderRadius:'30px', padding:'25px', border:'1px solid rgba(255,255,255,0.3)', overflowY:'auto' };
 const panelTitle = { fontSize:'0.8rem', textTransform:'uppercase', letterSpacing:'2px', opacity:0.5, marginBottom:'20px' };

@@ -3,9 +3,17 @@ import Weather from "../components/Weather";
 import ChatBot from "../components/ChatBot";
 
 export default function PortalPage() {
+  // Logic to handle the redirect and save the clicked destination
+  const handleProtectedLogin = (e, destination) => {
+    e.preventDefault();
+    const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+    // Pass the destination in the URL
+    window.location.href = `${BACKEND_URL}/auth/google?state=${destination}`; 
+  };
+
   const cardStyle = {
-    background: "rgba(255, 255, 255, 0.7)", // Semi-transparent white
-    backdropFilter: "blur(12px)",         // Glass effect
+    background: "rgba(255, 255, 255, 0.7)",
+    backdropFilter: "blur(12px)",
     border: "1px solid rgba(255, 255, 255, 0.4)", 
     borderRadius: "32px",                 
     padding: "2.5rem 1.5rem",
@@ -18,6 +26,7 @@ export default function PortalPage() {
     flexDirection: "column",
     justifyContent: "center",
     transition: "transform 0.3s ease, box-shadow 0.3s ease",
+    cursor: "pointer"
   };
 
   const titleStyle = {
@@ -25,7 +34,7 @@ export default function PortalPage() {
     fontSize: "1.25rem",
     fontWeight: "600",
     textTransform: "lowercase",
-    color: "#2d6a4f", // Deep forest green for titles
+    color: "#2d6a4f", 
   };
 
   const descStyle = {
@@ -39,8 +48,7 @@ export default function PortalPage() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: "#e8f5e9", // The Mint Green background
-      fontFamily: "var(--sans)", 
+      backgroundColor: "#e8f5e9",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -50,69 +58,43 @@ export default function PortalPage() {
     }}>
       
       {/* Weather Widget */}
-      <div style={{ 
-        position: "absolute", 
-        top: "2rem", 
-        right: "2rem",
-        background: "#2d6a4f",
-        padding: "0.5rem 1.2rem",
-        borderRadius: "50px",
-        backdropFilter: "blur(5px)"
-      }}>
+      <div style={{ position: "absolute", top: "2rem", right: "2rem", background: "#2d6a4f", padding: "0.5rem 1.2rem", borderRadius: "50px" }}>
         <Weather />
       </div>
 
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: "4rem" }}>
-        <h1 style={{ 
-          fontSize: "4.5rem", 
-          margin: "0", 
-          fontWeight: "800", 
-          letterSpacing: "-0.05em",
-          color: "#1b4332" 
-        }}>
+        <h1 style={{ fontSize: "4.5rem", margin: "0", fontWeight: "800", color: "#1b4332" }}>
           aura <span style={{fontWeight:'300'}}>boba</span>
         </h1>
-        <p style={{ 
-          color: "#2d6a4f", 
-          fontSize: "0.75rem", 
-          marginTop: "10px", 
-          textTransform: "uppercase",
-          letterSpacing: "0.6rem",
-          opacity: 0.6
-        }}>
+        <p style={{ color: "#2d6a4f", fontSize: "0.75rem", marginTop: "10px", textTransform: "uppercase", letterSpacing: "0.6rem", opacity: 0.6 }}>
           est. 2026
         </p>
       </div>
 
-      {/* The Restored Grid of 5 Cards */}
-      <div style={{ 
-        display: "flex", 
-        flexWrap: "wrap", 
-        gap: "2rem", 
-        justifyContent: "center", 
-        maxWidth: "1000px" 
-      }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", justifyContent: "center", maxWidth: "1000px" }}>
         
+        {/* PUBLIC ROUTES */}
         <Link to="/customer" style={cardStyle} className="hover-lift">
           <h2 style={titleStyle}>kiosk</h2>
           <p style={descStyle}>self-service ordering</p>
         </Link>
 
-        <Link to="/cashierpage" style={cardStyle} className="hover-lift">
+        {/* PROTECTED ROUTES: Now passing the route string to the handler */}
+        <a href="#" onClick={(e) => handleProtectedLogin(e, "/cashierpage")} style={cardStyle} className="hover-lift">
           <h2 style={titleStyle}>cashier</h2>
           <p style={descStyle}>in-store processing</p>
-        </Link>
+        </a>
 
-        <Link to="/kitchen" style={cardStyle} className="hover-lift">
+        <a href="#" onClick={(e) => handleProtectedLogin(e, "/kitchen")} style={cardStyle} className="hover-lift">
           <h2 style={titleStyle}>kitchen</h2>
           <p style={descStyle}>order fulfillment queue</p>
-        </Link>
+        </a>
 
-        <Link to="/manager" style={cardStyle} className="hover-lift">
+        <a href="#" onClick={(e) => handleProtectedLogin(e, "/manager")} style={cardStyle} className="hover-lift">
           <h2 style={titleStyle}>manager</h2>
           <p style={descStyle}>stats and inventory</p>
-        </Link>
+        </a>
 
         <Link to="/menuboard" style={cardStyle} className="hover-lift">
           <h2 style={titleStyle}>menu</h2>
@@ -123,7 +105,6 @@ export default function PortalPage() {
 
       <ChatBot />
 
-      {/* Small hover effect logic (Internal CSS) */}
       <style>{`
         .hover-lift:hover {
           transform: translateY(-8px);
