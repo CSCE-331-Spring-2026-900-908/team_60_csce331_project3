@@ -122,15 +122,37 @@ app.post("/api/auth/google", async (req, res) => {
         if (managers.includes(userEmail)) role = "manager";
         else if (cashiers.includes(userEmail)) role = "cashier";
 
+        let stamps = 0; // Default for new users
+
         if (role === "customer") {
+            // 1. Try to insert the user if they don't exist
             await pool.query(
                 `INSERT INTO public.customers (customer_id, name, stamps, lucky_draw_eligible, reward_points) 
                  VALUES ($1, $2, 0, false, 0) ON CONFLICT (customer_id) DO NOTHING`,
                 [googleId, fullName]
             );
+
+            // 2. Fetch the actual current data for this customer
+            const customerData = await pool.query(
+                "SELECT stamps FROM public.customers WHERE customer_id = $1",
+                [googleId]
+            );
+            
+            if (customerData.rows.length > 0) {
+                stamps = customerData.rows[0].stamps; // Get their real stamp count
+            }
         }
-        res.json({ success: true, role, name: fullName.split(' ')[0], customer_id: googleId });
+
+        // 3. Send stamps back to the kiosk so it can display "7/10" etc.
+        res.json({ 
+            success: true, 
+            role, 
+            name: fullName.split(' ')[0], 
+            customer_id: googleId,
+            stamps: stamps 
+        });
     } catch (err) {
+        console.error("Kiosk Auth Error:", err);
         res.status(401).json({ error: "Invalid Token" });
     }
 });

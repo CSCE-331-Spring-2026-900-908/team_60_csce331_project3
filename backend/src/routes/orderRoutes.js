@@ -3,6 +3,10 @@ import pool from "../config/db.js";
 
 const router = express.Router();
 
+/**
+ * GET /api/orders
+ * Fetches pending orders for the Kitchen view.
+ */
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -43,14 +47,23 @@ router.get("/", async (req, res) => {
   }
 });
 
+/**
+ * POST /api/orders
+ * Handles order placement, stamp increments, and reward redemptions.
+ */
 router.post("/", async (req, res) => {
   const client = await pool.connect();
   try {
     const { total_amount, items, customer_id, is_redemption } = req.body; 
-    const finalCustomerId = (customer_id && customer_id !== "undefined") ? String(customer_id) : "1";
+    
+    // Ensure customer_id is treated as a String for Google IDs
+    const finalCustomerId = (customer_id && customer_id !== "undefined" && customer_id !== "null") 
+      ? String(customer_id) 
+      : "1";
 
     await client.query('BEGIN');
 
+    // 1. Create the Order
     const orderResult = await client.query(
       `INSERT INTO public.orders (customer_id, employee_id, date, status, total_amount, time, z_reported) 
        VALUES ($1, 1, CURRENT_DATE, 'pending', $2, LOCALTIME, false) 
@@ -59,6 +72,7 @@ router.post("/", async (req, res) => {
     );
     const newOrderId = orderResult.rows[0].order_id;
 
+    // 2. Handle Order Items
     const maxIdResult = await client.query("SELECT COALESCE(MAX(order_item_id), 0) AS max_id FROM public.orderitems");
     let currentItemId = parseInt(maxIdResult.rows[0].max_id, 10);
 
@@ -70,19 +84,30 @@ router.post("/", async (req, res) => {
       );
     }
 
+    // 3. Aura Boba Stamp Logic
     if (finalCustomerId !== "1") {
       if (is_redemption) {
-        await client.query(`UPDATE customers SET stamps = stamps - 10 WHERE customer_id = $1`, [finalCustomerId]);
+        // Reset stamps to 0 or subtract 10, ensuring they don't go below 0
+        await client.query(
+          `UPDATE public.customers SET stamps = GREATEST(stamps - 10, 0) WHERE customer_id = $1`, 
+          [finalCustomerId]
+        );
       } else {
+        // Standard purchase: 1 stamp, with a 20% chance for a bonus
         let stampsEarned = Math.random() <= 0.20 ? 2 : 1;
-        await client.query(`UPDATE customers SET stamps = stamps + $1 WHERE customer_id = $2`, [stampsEarned, finalCustomerId]);
+        await client.query(
+          `UPDATE public.customers SET stamps = stamps + $1 WHERE customer_id = $2`, 
+          [stampsEarned, finalCustomerId]
+        );
       }
     }
 
     await client.query('COMMIT');
     res.status(201).json({ order_id: newOrderId });
+
   } catch (err) {
     await client.query('ROLLBACK');
+    console.error("ORDER POST ERROR:", err.message);
     res.status(500).json({ error: err.message });
   } finally {
     client.release();
