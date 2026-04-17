@@ -38,10 +38,10 @@ export default function AdminPage() {
 
   return (
     <div style={auraContainer}>
-      {/* Standardized Absolute Back Button */}
-      <Link to="/" style={backBtnStyle}>← portal</Link>
+      <Link to="/" style={backButtonStyle}>← portal</Link>
 
       <header style={auraHeader}>
+        
         <div>
           <h1 style={logoStyle}>aura <span style={{fontWeight: '300'}}>admin</span></h1>
           <p style={subtitleStyle}>managerial reports & analytics</p>

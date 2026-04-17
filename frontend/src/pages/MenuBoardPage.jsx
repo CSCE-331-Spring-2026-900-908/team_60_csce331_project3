@@ -35,10 +35,11 @@ export default function MenuBoardPage() {
     <div style={pageStyle}>
       <Link to="/" style={backBtnStyle}>← portal</Link>
 
-      <div style={headerLayout}>
+      <div style={{ position: "absolute", top: "2rem", right: "2rem", background: "#2d6a4f", padding: "0.5rem 1.2rem", borderRadius: "50px" }}>
         <Weather />
       </div>
 
+      
       <header style={titleHeader}>
         <h1 style={logoStyle}>aura <span style={{fontWeight: '300'}}>menu</span></h1>
         <p style={subtitleStyle}>steeped in nature</p>

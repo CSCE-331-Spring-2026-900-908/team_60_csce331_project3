@@ -121,8 +121,11 @@ const CashierPage = () => {
     };
 
     return (
+        
         <div style={auraContainer}>
             <Link to="/" style={backBtnStyle}>← portal</Link>
+
+            
 
             <header style={auraHeader}>
                 <div style={{ display:'flex', alignItems:'center' }}>
@@ -142,6 +145,7 @@ const CashierPage = () => {
                         ))}
                     </div>
                 </div>
+
 
                 <div style={glassPanel}>
                     <h2 style={panelTitle}>Add-ons</h2>

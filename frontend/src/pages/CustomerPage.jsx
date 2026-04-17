@@ -225,6 +225,7 @@ export default function CustomerPage() {
           </div>
         </div>
       )}
+      
 
       <header style={auraHeader}>
         <div style={headerContent}>
@@ -232,7 +233,9 @@ export default function CustomerPage() {
             <h1 style={logoStyle}>aura <span style={{fontWeight:'300'}}>kiosk</span></h1>
             <p style={subtitleStyle}>steeped in nature</p>
           </div>
-          <div style={weatherCapsule}><Weather /></div>
+          <div style={{ position: "absolute", top: "2rem", right: "2rem", background: "#2d6a4f", padding: "0.5rem 1.2rem", borderRadius: "50px" }}>
+        <Weather />
+      </div>
         </div>
       </header>
 
