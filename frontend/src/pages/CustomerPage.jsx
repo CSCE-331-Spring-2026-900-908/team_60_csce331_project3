@@ -5,6 +5,43 @@ import Weather from '../components/Weather';
 import { GoogleLogin } from '@react-oauth/google';
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
+const drinkImageMap = {
+  "mango fruit tea": "/images/drinks/mango-fruit-tea.jpg",
+  "passionfruit green tea": "/images/drinks/passionfruit-green-tea.jpg",
+  "peach oolong tea": "/images/drinks/peach-oolong-tea.jpg",
+  "strawberry fruit tea": "/images/drinks/strawberry-fruit-tea.jpg",
+  "matcha latte": "/images/drinks/matcha-latte.jpg",
+  "matcha (no tea)": "/images/drinks/matcha-no-tea.jpg",
+  "taro (no tea)": "/images/drinks/taro-no-tea.jpg",
+  "brown sugar milk (popping)": "/images/drinks/brown-sugar-milk-popping.jpg",
+  "brown sugar milk tea": "/images/drinks/brown-sugar-milk-tea.jpg",
+  "classic milk tea": "/images/drinks/classic-milk-tea.jpg",
+  "classic milk tea (jelly)": "/images/drinks/classic-milk-tea-jelly.jpg",
+  "classic milk tea (popping)": "/images/drinks/classic-milk-tea-popping.jpg",
+  "cocoa milk tea": "/images/drinks/cocoa-milk-tea.jpg",
+  "creamy baka milk tea": "/images/drinks/creamy-baka-milk-tea.jpg",
+  "deliverable drink": "/images/drinks/default-boba.jpg",
+  "jasmine milk tea": "/images/drinks/jasmine-milk-tea.jpg",
+  "oolong milk tea": "/images/drinks/oolong-milk-tea.jpg",
+  "taro milk tea": "/images/drinks/taro-milk-tea.jpg",
+  "thai milk tea": "/images/drinks/thai-milk-tea.jpg",
+  "thai tea (jelly)": "/images/drinks/thai-tea-jelly.jpg",
+  "mango slush": "/images/drinks/mango-slush.jpg",
+  "strawberry slush": "/images/drinks/strawberry-slush.jpg",
+  "green tea": "/images/drinks/green-tea.jpg",
+  "honey black tea": "/images/drinks/honey-black-tea.jpg",
+  "honey green tea": "/images/drinks/honey-green-tea.jpg",
+  "jasmine lemon (seasonal)": "/images/drinks/jasmine-lemon-seasonal.jpg",
+  "oolong peach (seasonal)": "/images/drinks/oolong-peach-seasonal.jpg",
+};
+
+function getDrinkImage(item) {
+  return (
+    drinkImageMap[item.name?.toLowerCase()] ||
+    "/images/drinks/thai-milk-tea.jpg"
+  );
+}
+
 export default function CustomerPage() {
   // --- DYNAMIC URL LOGIC ---
   const VITE_URL = import.meta.env.VITE_API_URL;
@@ -280,7 +317,16 @@ export default function CustomerPage() {
           <section style={menuGrid}>
             {filteredItems.map((item) => (
               <div key={item.menu_item_id} style={auraItemCard}>
-                <div style={imageCircle}>🧋</div>
+                <div style={imageCircle}>
+                  <img
+                    src={getDrinkImage(item)}
+                    alt={item.name}
+                    style={drinkImageStyle}
+                    onError={(e) => {
+                    e.currentTarget.src = "/images/drinks/thai-milk-tea.jpg";
+                    }}
+                  />
+                </div>
                 <h3 style={itemTitle}>{item.name.toLowerCase()}</h3>
                 <p style={itemDescription}>{item.description}</p>
                 <div style={priceActionRow}>
@@ -409,3 +455,4 @@ const loyaltyBanner = { marginBottom: '1.5rem', padding: '15px', borderRadius: '
 const activeDot = { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2d6a4f', boxShadow: '0 0 8px #2d6a4f' };
 const progressBg = { height: '8px', background: '#e2e8f0', borderRadius: '10px', marginTop: '10px', overflow: 'hidden' };
 const progressBar = (stamps) => ({ height: '100%', width: `${Math.min((stamps) * 10, 100)}%`, background: '#2d6a4f', transition: 'width 0.5s ease-in-out' });
+const drinkImageStyle = {width: "78px",height: "78px",objectFit: "cover",borderRadius: "50%",};
