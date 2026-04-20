@@ -188,22 +188,41 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+// Add these variables ABOVE your routes (near the top of server.js)
+let cachedWeather = null;
+let lastFetchTime = 0;
+
+// Update your weather route
 app.get("/api/weather", async (req, res) => {
+  const now = Date.now();
+  const fifteenMinutes = 15 * 60 * 1000;
+
+  // If we have a recent temperature (less than 15 mins old), use it!
+  if (cachedWeather !== null && (now - lastFetchTime) < fifteenMinutes) {
+    return res.json({ temp: cachedWeather, source: "cache" });
+  }
+
   try {
     const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=30.628&longitude=-96.334&current=temperature_2m&temperature_unit=fahrenheit", {
-      headers: {
-        'User-Agent': 'AuraBobaApp/1.0 (contact: your-email@tamu.edu)' 
-      }
+      headers: { 'User-Agent': 'AuraBobaApp/1.0' }
     });
 
     if (!response.ok) {
+      // If we hit a 429 but have OLD data, just use the old data instead of failing
+      if (response.status === 429 && cachedWeather !== null) {
+        return res.json({ temp: cachedWeather, source: "stale-cache-on-error" });
+      }
       throw new Error(`Weather API responded with status: ${response.status}`);
     }
 
     const data = await response.json();
-    res.json({ temp: Math.round(data.current.temperature_2m) });
+    cachedWeather = Math.round(data.current.temperature_2m);
+    lastFetchTime = now;
+
+    res.json({ temp: cachedWeather, source: "live" });
   } catch (error) {
-    console.error("Weather Fetch Error:", error); // This will show in Render Logs
+    console.error("Weather Fetch Error:", error);
+    // Fallback so the UI doesn't break
     res.status(500).json({ error: "Weather unavailable", details: error.message });
   }
 });
