@@ -188,42 +188,32 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// Add these variables ABOVE your routes (near the top of server.js)
-let cachedWeather = null;
-let lastFetchTime = 0;
-
-// Update your weather route
 app.get("/api/weather", async (req, res) => {
-  const now = Date.now();
-  const fifteenMinutes = 15 * 60 * 1000;
-
-  // If we have a recent temperature (less than 15 mins old), use it!
-  if (cachedWeather !== null && (now - lastFetchTime) < fifteenMinutes) {
-    return res.json({ temp: cachedWeather, source: "cache" });
-  }
-
   try {
-    const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=30.628&longitude=-96.334&current=temperature_2m&temperature_unit=fahrenheit", {
-      headers: { 'User-Agent': 'AuraBobaApp/1.0' }
-    });
+    // 1. Get the grid metadata for College Station (TAMU)
+    // Lat/Lon for Reed Arena area
+    const pointsUrl = "https://api.weather.gov/points/30.628,-96.334";
+    const headers = { 'User-Agent': 'AuraBobaKiosk/1.0 (contact: ok.samgarces@gmail.com)' };
 
-    if (!response.ok) {
-      // If we hit a 429 but have OLD data, just use the old data instead of failing
-      if (response.status === 429 && cachedWeather !== null) {
-        return res.json({ temp: cachedWeather, source: "stale-cache-on-error" });
-      }
-      throw new Error(`Weather API responded with status: ${response.status}`);
-    }
+    const pointsResponse = await fetch(pointsUrl, { headers });
+    if (!pointsResponse.ok) throw new Error("NWS points lookup failed");
+    const pointsData = await pointsResponse.json();
+    
+    // 2. Get the hourly forecast URL from the properties
+    const forecastUrl = pointsData.properties.forecastHourly;
+    const weatherResponse = await fetch(forecastUrl, { headers });
+    if (!weatherResponse.ok) throw new Error("NWS forecast fetch failed");
+    const weatherData = await weatherResponse.json();
 
-    const data = await response.json();
-    cachedWeather = Math.round(data.current.temperature_2m);
-    lastFetchTime = now;
+    // 3. Extract the current temperature from the first period
+    const currentTemp = weatherData.properties.periods[0].temperature;
 
-    res.json({ temp: cachedWeather, source: "live" });
+    res.json({ temp: Math.round(currentTemp) });
   } catch (error) {
-    console.error("Weather Fetch Error:", error);
-    // Fallback so the UI doesn't break
-    res.status(500).json({ error: "Weather unavailable", details: error.message });
+    console.error("Weather System Error:", error.message);
+    // FAIL-SAFE: If government API is down, show a reasonable default 
+    // so the kiosk UI doesn't look broken.
+    res.json({ temp: 78, status: "fallback" });
   }
 });
 
