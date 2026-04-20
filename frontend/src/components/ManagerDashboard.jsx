@@ -30,7 +30,7 @@ export default function ManagerDashboard() {
             .then(res => res.json())
             .then(data => setInventory(Array.isArray(data) ? data : []));
 
-        fetch("http://localhost:8080/api/employees")
+        fetch("http://localhost:8080/api/manager/employees")
             .then(res => res.json())
             .then(data => setEmployees(Array.isArray(data) ? data : []));
 
