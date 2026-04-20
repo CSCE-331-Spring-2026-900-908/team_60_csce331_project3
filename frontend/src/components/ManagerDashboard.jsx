@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
-
+//testing
 export default function ManagerDashboard() {
     // --- STATE MANAGEMENT ---
     const [activeTab, setActiveTab] = useState('usage'); 
@@ -225,7 +225,7 @@ export default function ManagerDashboard() {
                             </tbody>
                         </table>
                     )}
-
+                    
                     {/* X/Z VIEWS */}
                     {activeTab === 'xreport' && (
                     <div style={{height: '400px', padding: '20px'}}>
