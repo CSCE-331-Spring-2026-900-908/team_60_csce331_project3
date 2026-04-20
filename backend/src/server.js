@@ -190,11 +190,21 @@ app.post("/api/chat", async (req, res) => {
 
 app.get("/api/weather", async (req, res) => {
   try {
-    const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=30.628&longitude=-96.334&current=temperature_2m&temperature_unit=fahrenheit");
+    const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=30.628&longitude=-96.334&current=temperature_2m&temperature_unit=fahrenheit", {
+      headers: {
+        'User-Agent': 'AuraBobaApp/1.0 (contact: your-email@tamu.edu)' 
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Weather API responded with status: ${response.status}`);
+    }
+
     const data = await response.json();
     res.json({ temp: Math.round(data.current.temperature_2m) });
   } catch (error) {
-    res.status(500).json({ error: "Weather unavailable" });
+    console.error("Weather Fetch Error:", error); // This will show in Render Logs
+    res.status(500).json({ error: "Weather unavailable", details: error.message });
   }
 });
 
