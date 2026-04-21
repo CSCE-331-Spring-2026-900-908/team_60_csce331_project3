@@ -8,8 +8,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aura Boba</title>
 	<script>
+		let narrationEnable = localStorage.getItem("narration") === "true"
+		
 		/* global narration */
 		window.narrate = function(text){
+			if(!narrationEnable){
+				return;
+			}
 			window.speechSynthesis.cancel();
 			const narratorUtter = new SpeechSynthesisUtterance(text);
 			narratorUtter.rate = 1;
@@ -18,10 +23,73 @@
 
 		};
 
+
+		/* keyboard shortcut of alt + n to allow for narrator to be enabled after first visit */
+		document.addEventListener("keydown", (e) => {
+			if(e.key === "n" && e.altKey){
+				narrationEnable = !narrationEnable;
+				localStorage.setItem("narration", narrationEnable);
+		
+				window.speechSynthesis.cancel();
+				const msg = new SpeechSynthesisUtterance(
+					narrationEnable ? "Narration enabled" : "Narration disabled"
+				);
+				window.speechSynthesis.speak(msg);
+			}
+		});
+		/*prompt narration on first visit*/
+		if(localStorage.getItem("narration") === null){
+			window.addEventListener("DOMContentLoaded", () => {
+				const firstVisit = new SpeechSynthesisUtterance(
+					"Welcome to Aura Boba. Would you like to enable narration for accessibility? Press Y to enable or N to disable."
+			);
+			window.speechSynthesis.speak(firstVisit);
+
+			/*show a visible dialog for partially sight users */
+			const banner = document.createElement("div");
+			banner.style.cssText = `
+			    position: fixed; top: 0; left: 0; right: 0;
+			    background: #222; color: white; padding: 16px;
+			    text-align: center; z-index: 9999; font-size: 16px;
+			`;
+			banner.innerHTML = `
+			    Enable narration for accessibility?
+			    <button id = "narration-yes" style = "margin: 0 8px; padding: 6px 16px; cursor: pointer;">Yes (Y) </button>
+			    <button id = "narration-no" style = "margin: 0 8px; padding: 6px 16px; cursor: pointer;"> No (N) </button>
+			`;
+
+			document.body.appendChild(banner);		
+		
+			const confirm = (enabled) => {
+				narrationEnable = enabled;
+				localStorage.setItem("narration", enabled);
+				document.body.removeChild(banner);
+				if(enabled){
+					const confirmMsg = new SpeechSynthesisUtterance("Narration is enabled. Press Alt and N simultaneously to toggle narration on and off.");
+					window.speechSynthesis.speak(confirmMsg);
+				}
+			};
+			document.getElementById("narration-no").onclick = () => confirm(false);
+			document.getElementById("narration-yes").onclick = () => confirm(true);
+			
+			const handler = (e) => {
+				if(e.key === "Y" || e.key === "y"){
+					confirm(true);
+					document.removeEventListener("keydown", handler);
+				} 
+				if(e.key === "N" || e.key === "n"){
+					confirm(false);
+					document.removeEventListener("keydown", handler);
+				}
+			};
+			document.addEventListener("keydown", handler);
+			});
+		}	
+
 		/*keyboard and tab navigation narrator */
 		document.addEventListener("focusin", (e) =>{
 			const el = e.target;
-			const text = el.getAttribute("aria-labal") || el.getAttribute("placeholder") || el.getAttribute("title") || el.innerText?.trim();
+			const text = el.getAttribute("aria-label") || el.getAttribute("placeholder") || el.getAttribute("title") || el.innerText?.trim();
 			if(text){
 				window.narrate(text);
 			}	
@@ -47,8 +115,6 @@
 
 
 
-
-	//translation widget
     <style>
       /* Pins the translate button so it doesn't push the boba menu down */
       #translate_element {
