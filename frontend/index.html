@@ -7,7 +7,48 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aura Boba</title>
+	<script>
+		/* global narration */
+		window.narrate = function(text){
+			window.speechSynthesis.cancel();
+			const narratorUtter = new SpeechSynthesisUtterance(text);
+			narratorUtter.rate = 1;
+			narratorUtter.pitch = 1;
+			window.speechSynthesis.speak(narratorUtter);
 
+		};
+
+		/*keyboard and tab navigation narrator */
+		document.addEventListener("focusin", (e) =>{
+			const el = e.target;
+			const text = el.getAttribute("aria-labal") || el.getAttribute("placeholder") || el.getAttribute("title") || el.innerText?.trim();
+			if(text){
+				window.narrate(text);
+			}	
+
+	
+		});
+
+		/* narration on mouse hover */
+		document.addEventListener("mouseover", (e)=> {
+			const el = e.target;
+			const text = el.getAttribute("aria-label") || el.getAttribute("title") || el.innerText?.trim();
+			if( (text) && (text.length < 100) ){
+				window.narrate(text);
+			}	
+
+	
+		});
+
+
+
+	</script>
+	
+
+
+
+
+	//translation widget
     <style>
       /* Pins the translate button so it doesn't push the boba menu down */
       #translate_element {
