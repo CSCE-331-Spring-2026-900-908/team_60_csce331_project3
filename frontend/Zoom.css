@@ -51,37 +51,80 @@ button {
   cursor: pointer;
 }
 
-.a11y-toolbar {
+.zoom-toolbar {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  top: 1.25rem;
+  left: 1.25rem;
   z-index: 1000;
-  background: white;
-  border: 2px solid #222;
-  border-radius: 12px;
-  padding: 0.75rem;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-  max-width: 260px;
-}
 
-.a11y-label {
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #2f5e4e;
+  border-radius: 22px;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 
-.a11y-buttons {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 170px;
+
+  color: #214d3f;
+  font-family: Arial, sans-serif;
+}
+
+.zoom-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #214d3f;
+}
+
+.zoom-percent {
+  font-size: 0.9rem;
+  color: #5f736d;
+  margin-bottom: 0.15rem;
+}
+
+.zoom-buttons {
+  display: flex;
+  gap: 0.45rem;
   flex-wrap: wrap;
 }
 
-.a11y-buttons button {
-  border: 1px solid #444;
-  border-radius: 8px;
-  background: #f7f7f7;
+.zoom-btn {
+  background: #f6f7f4;
+  border: 1.5px solid #d7ddd8;
+  border-radius: 14px;
+  color: #214d3f;
+  font-weight: 600;
+  min-height: 40px;
+  min-width: 52px;
+  padding: 0.45rem 0.8rem;
+  transition: 0.2s ease;
 }
 
-.a11y-buttons button:focus {
-  outline: 3px solid #1a73e8;
+.zoom-btn:hover {
+  background: #edf3ee;
+}
+
+.zoom-btn:focus {
+  outline: 2px solid #2f5e4e;
   outline-offset: 2px;
+}
+
+.zoom-btn.reset {
+  min-width: 70px;
+}
+
+@media (max-width: 768px) {
+  .zoom-toolbar {
+    top: 0.8rem;
+    left: 0.8rem;
+    padding: 0.75rem 0.85rem;
+    min-width: 155px;
+  }
+
+  .zoom-btn {
+    min-width: 48px;
+    padding: 0.4rem 0.7rem;
+  }
 }

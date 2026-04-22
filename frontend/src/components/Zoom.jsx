@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const ZOOM_LEVELS = [1, 1.15, 1.3, 1.45];
+const ZOOM_LEVELS = [1, 1.1, 1.2, 1.3, 1.45];
 
 export default function Zoom() {
   const [zoomIndex, setZoomIndex] = useState(() => {
@@ -29,16 +29,14 @@ export default function Zoom() {
   const currentPercent = Math.round((ZOOM_LEVELS[zoomIndex] || 1) * 100);
 
   return (
-    <div
-      className="a11y-toolbar"
-      role="region"
-      aria-label="Magnify"
-    >
-      <div className="a11y-label">Text Size: {currentPercent}%</div>
+    <div className="zoom-toolbar" role="region" aria-label="Zoom controls">
+      <div className="zoom-label">Text Size</div>
+      <div className="zoom-percent">{currentPercent}%</div>
 
-      <div className="a11y-buttons">
+      <div className="zoom-buttons">
         <button
           type="button"
+          className="zoom-btn"
           onClick={decreaseZoom}
           aria-label="Decrease text size"
         >
@@ -47,15 +45,16 @@ export default function Zoom() {
 
         <button
           type="button"
+          className="zoom-btn"
           onClick={increaseZoom}
           aria-label="Increase text size"
-          title="Increase text size"
         >
-          🔍 A+
+          A+
         </button>
 
         <button
           type="button"
+          className="zoom-btn reset"
           onClick={resetZoom}
           aria-label="Reset text size"
         >
