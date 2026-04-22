@@ -8,7 +8,7 @@ import LoginSuccess from "./pages/LoginSuccess";
 import ManagerDashboard from "./components/ManagerDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Zoom from "./components/Zoom";
-import "./styles/Zoom.css";
+import "../Zoom.css";
 
 export default function App() {
   return (
