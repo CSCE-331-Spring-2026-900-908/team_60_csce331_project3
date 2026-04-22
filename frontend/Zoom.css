@@ -1,41 +1,8 @@
 :root {
   --text-scale: 1;
-  --body-font-size: calc(1rem * var(--text-scale));
-  --h1-font-size: calc(2rem * var(--text-scale));
-  --h2-font-size: calc(1.5rem * var(--text-scale));
-  --h3-font-size: calc(1.2rem * var(--text-scale));
   --control-height: calc(44px * var(--text-scale));
   --control-padding-x: calc(14px * var(--text-scale));
   --control-padding-y: calc(10px * var(--text-scale));
-}
-
-body,
-p,
-span,
-label,
-a,
-li,
-button,
-input,
-select,
-textarea {
-  font-size: var(--body-font-size);
-  line-height: 1.5;
-}
-
-h1 {
-  font-size: var(--h1-font-size);
-  line-height: 1.2;
-}
-
-h2 {
-  font-size: var(--h2-font-size);
-  line-height: 1.25;
-}
-
-h3 {
-  font-size: var(--h3-font-size);
-  line-height: 1.3;
 }
 
 button,
@@ -56,20 +23,17 @@ button {
   top: 1.25rem;
   left: 1.25rem;
   z-index: 1000;
-
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   border: 2px solid #2f5e4e;
   border-radius: 22px;
   padding: 0.9rem 1rem;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
-
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  min-width: 170px;
-
+  min-width: 190px;
   color: #214d3f;
-  font-family: Arial, sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .zoom-label {
@@ -81,7 +45,6 @@ button {
 .zoom-percent {
   font-size: 0.9rem;
   color: #5f736d;
-  margin-bottom: 0.15rem;
 }
 
 .zoom-buttons {
@@ -115,16 +78,51 @@ button {
   min-width: 70px;
 }
 
+.magnifier-section {
+  margin-top: 0.2rem;
+}
+
+.magnifier-btn {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.magnifier-btn.active {
+  background: #dfeee4;
+  border-color: #2f5e4e;
+}
+
+.zoom-hint {
+  font-size: 0.8rem;
+  color: #6c7f79;
+  line-height: 1.3;
+}
+
+.magnifier-mode,
+.magnifier-mode * {
+  cursor: zoom-in !important;
+}
+
 @media (max-width: 768px) {
   .zoom-toolbar {
     top: 0.8rem;
     left: 0.8rem;
     padding: 0.75rem 0.85rem;
-    min-width: 155px;
+    min-width: 170px;
   }
 
   .zoom-btn {
     min-width: 48px;
     padding: 0.4rem 0.7rem;
+  }
+
+  .magnifier-btn {
+    width: 48px;
+    height: 48px;
   }
 }

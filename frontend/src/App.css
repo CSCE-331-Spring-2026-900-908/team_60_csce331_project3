@@ -28,7 +28,7 @@ body {
 
 /* Updated .counter to match Aura */
 .counter {
-  font-size: 16px;
+  font-size: 1rem;
   padding: 10px 20px;
   border-radius: 50px; /* Rounded pill shape */
   color: white;
