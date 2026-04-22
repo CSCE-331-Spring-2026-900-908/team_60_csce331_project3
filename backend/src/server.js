@@ -85,7 +85,7 @@ app.get("/auth/google/callback", async (req, res) => {
         
         // 3. Determine Role
         const managers = ["ok.samgarces@gmail.com", "reveille.bubbletea@gmail.com", "ibrahimerandhawa@gmail.com", "4andrew.siv@gmail.com", "christianb62791@gmail.com", "rch27@tamu.edu"];
-        const cashiers = ["purigarv@tamu.edu", "cqb.23000@tamu.edu", "andrewsiv14@tamu.edu", "garcesam0@tamu.edu", "ibrahime@tamu.edu"];
+        const cashiers = ["purigarv@tamu.edu", "cqb.23000@tamu.edu", "andrewsiv14@tamu.edu", "garcesam0@tamu.edu", "ibrahime@tamu.edu"];`   `
         
         let role = "customer";
         if (managers.includes(payload.email)) role = "manager";

@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 
+// --- API CONFIGURATION ---
+const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? "http://localhost:8080" 
+    : "https://auraboba-be.onrender.com";
+
 export default function ManagerDashboard() {
+    const navigate = useNavigate();
+
     // --- STATE MANAGEMENT ---
     const [activeTab, setActiveTab] = useState('usage'); 
     const [inventory, setInventory] = useState([]);
     const [employees, setEmployees] = useState([]);
-    const [usageData, setUsageData] = useState([]); // Specifically for Ingredients
-    const [salesData, setSalesData] = useState([]); // Specifically for Menu Items
+    const [usageData, setUsageData] = useState([]); 
+    const [salesData, setSalesData] = useState([]); 
     const [xData, setXData] = useState([]);
     const [zOutput, setZOutput] = useState(null);
     const [isZDisabled, setIsZDisabled] = useState(false);
@@ -26,15 +34,15 @@ export default function ManagerDashboard() {
     }, []);
 
     const refreshBaseData = async () => {
-        fetch("http://localhost:8080/api/inventory")
+        fetch(`${API_BASE_URL}/api/inventory`)
             .then(res => res.json())
             .then(data => setInventory(Array.isArray(data) ? data : []));
 
-        fetch("http://localhost:8080/api/manager/employees")
+        fetch(`${API_BASE_URL}/api/manager/employees`)
             .then(res => res.json())
             .then(data => setEmployees(Array.isArray(data) ? data : []));
 
-        fetch("http://localhost:8080/api/reports/sales-summary")
+        fetch(`${API_BASE_URL}/api/reports/sales-summary`)
             .then(res => res.json())
             .then(data => setStats(data || { total_orders: 0, total_revenue: 0 }));
             
@@ -43,7 +51,7 @@ export default function ManagerDashboard() {
     };
 
     const runUsageReport = () => {
-        const url = `http://localhost:8080/api/reports/usage?startDay=${startDate}&endDay=${endDate}&startTime=00:00:00&endTime=23:59:59`;
+        const url = `${API_BASE_URL}/api/reports/usage?startDay=${startDate}&endDay=${endDate}&startTime=00:00:00&endTime=23:59:59`;
         fetch(url)
             .then(res => res.json())
             .then(data => {
@@ -58,7 +66,7 @@ export default function ManagerDashboard() {
     };
 
     const runSalesReport = () => {
-        const url = `http://localhost:8080/api/reports/sales?startDay=${startDate}&endDay=${endDate}&startTime=00:00:00&endTime=23:59:59`;
+        const url = `${API_BASE_URL}/api/reports/sales?startDay=${startDate}&endDay=${endDate}&startTime=00:00:00&endTime=23:59:59`;
         fetch(url)
             .then(res => res.json())
             .then(data => {
@@ -73,13 +81,13 @@ export default function ManagerDashboard() {
     };
 
     const runXReport = () => {
-        fetch("http://localhost:8080/api/reports/x-report")
+        fetch(`${API_BASE_URL}/api/reports/x-report`)
             .then(res => res.json())
             .then(data => setXData(data));
     };
 
     const checkZStatus = () => {
-        fetch("http://localhost:8080/api/reports/z-status")
+        fetch(`${API_BASE_URL}/api/reports/z-status`)
             .then(res => res.json())
             .then(data => setIsZDisabled(data.alreadyRunToday));
     };
@@ -87,7 +95,7 @@ export default function ManagerDashboard() {
     const runZReport = async () => {
         if (!window.confirm("Run Z-Report and reset daily totals? This cannot be undone.")) return;
         try {
-            const res = await fetch("http://localhost:8080/api/reports/z-report", { method: "POST" });
+            const res = await fetch(`${API_BASE_URL}/api/reports/z-report`, { method: "POST" });
             const data = await res.json();
             if (res.ok) {
                 setZOutput(data); 
@@ -106,7 +114,7 @@ export default function ManagerDashboard() {
         const name = prompt("Enter employee name:");
         const role = prompt("Enter role (manager/cashier):")?.toLowerCase();
         if (name && (role === 'manager' || role === 'cashier')) {
-            const res = await fetch("http://localhost:8080/api/employees", {
+            const res = await fetch(`${API_BASE_URL}/api/employees`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name, role })
@@ -118,7 +126,7 @@ export default function ManagerDashboard() {
     const submitMenuItem = async () => {
         if(!menuForm.name || !menuForm.base_price) return alert("Fill required fields");
         try {
-            const res = await fetch("http://localhost:8080/api/menu/menuitems", {
+            const res = await fetch(`${API_BASE_URL}/api/menu/menuitems`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...menuForm, menu_item_id: Math.floor(Math.random() * 100000), base_price: parseFloat(menuForm.base_price) })
@@ -133,14 +141,18 @@ export default function ManagerDashboard() {
     return (
         <div style={containerStyle}>
             <header style={headerSection}>
-                <div>
-                    <h1 style={titleStyle}>Aura <span style={{fontWeight:'300'}}>Manager</span></h1>
-                    <p style={subtitleStyle}>Unified supply chain & performance dashboard</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <button onClick={() => navigate('/')} style={backButtonStyle}>← Portal</button>
+                    <div>
+                        <h1 style={titleStyle}>Aura <span style={{fontWeight:'300'}}>Manager</span></h1>
+                        <p style={subtitleStyle}>Unified supply chain & performance dashboard</p>
+                    </div>
                 </div>
                 <div style={dateBox}>{new Date().toLocaleDateString()}</div>
             </header>
 
             <div style={dashboardGrid}>
+                {/* Low Stock Alerts */}
                 <div style={cardStyle}>
                     <div style={cardHeader}><h3>Low Stock Alerts</h3><span style={badgeStyle}>Critical Items</span></div>
                     <div style={{height: '300px', marginTop: '20px'}}>
@@ -153,11 +165,13 @@ export default function ManagerDashboard() {
                     </div>
                 </div>
 
+                {/* Team Directory */}
                 <div style={cardStyle}>
                     <div style={cardHeader}><h3>Team Directory</h3><button onClick={hireEmployee} style={addBtnStyle}>+ Hire</button></div>
                     <div style={listScrollSection}>{employees.map(emp => (<div key={emp.employee_id} style={listItemStyle}><div><div style={{fontWeight: '700'}}>{emp.name}</div><div style={{fontSize: '0.8rem', opacity: 0.6}}>ID: #{emp.employee_id}</div></div><span style={roleBadge}>{emp.role}</span></div>))}</div>
                 </div>
 
+                {/* Add Menu Items */}
                 <div style={cardStyle}>
                     <h3>Add Menu Items</h3>
                     <div style={formGrid}>
@@ -170,6 +184,7 @@ export default function ManagerDashboard() {
                 </div>
             </div>
 
+            {/* Reports Section */}
             <div style={{...cardStyle, marginTop: '30px'}}>
                 <div style={tabHeader}>
                     <div style={tabGroup}>
@@ -212,27 +227,27 @@ export default function ManagerDashboard() {
                     )}
 
                     {activeTab === 'xreport' && (
-                    <div style={{height: '400px', padding: '20px'}}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={xData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="hr" tickFormatter={(tick) => `${tick}:00`} />
-                                <YAxis />
-                                <Tooltip />
-                                <Bar dataKey="rev" fill="#1b4332" radius={[5, 5, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                )}
+                        <div style={{height: '400px', padding: '20px'}}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={xData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="hr" tickFormatter={(tick) => `${tick}:00`} />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Bar dataKey="rev" fill="#1b4332" radius={[5, 5, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
 
                     {activeTab === 'zreport' && (
-                    <div style={{ textAlign: 'center', padding: '40px' }}>
-                        <button onClick={runZReport} disabled={isZDisabled} style={isZDisabled ? { ...zBtnStyle, opacity: 0.5, cursor: 'not-allowed' } : zBtnStyle}>
-                            {isZDisabled ? "Z-Report Already Run Today" : "Run Z-Report & Reset Day"}
-                        </button>
-                        {zOutput && (
-                            <div style={zTapeStyle}>
-                                <pre style={monospaceStyle}>
+                        <div style={{ textAlign: 'center', padding: '40px' }}>
+                            <button onClick={runZReport} disabled={isZDisabled} style={isZDisabled ? { ...zBtnStyle, opacity: 0.5, cursor: 'not-allowed' } : zBtnStyle}>
+                                {isZDisabled ? "Z-Report Already Run Today" : "Run Z-Report & Reset Day"}
+                            </button>
+                            {zOutput && (
+                                <div style={zTapeStyle}>
+                                    <pre style={monospaceStyle}>
 {`========== REVEILLE BOBA Z-REPORT ==========
 Date:      ${zOutput.date}
 Time:      ${zOutput.timestamp}
@@ -242,11 +257,11 @@ Tax (8.25%):     $${zOutput.tax.toFixed(2)}
 TOTAL REVENUE:   $${zOutput.total.toFixed(2)}
 --------------------------------------------
 Status: Daily Totals Reset Successfully.`}
-                                </pre>
-                            </div>
-                        )}
-                    </div>
-                )}
+                                    </pre>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -256,9 +271,10 @@ Status: Daily Totals Reset Successfully.`}
 // --- STYLES ---
 const containerStyle = { padding: '40px', backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: 'Inter, sans-serif' };
 const headerSection = { display: 'flex', justifyContent: 'space-between', marginBottom: '20px' };
-const titleStyle = { fontSize: '2rem', fontWeight: '800', color: '#1e293b' };
-const subtitleStyle = { color: '#64748b', marginTop: '-5px' };
+const titleStyle = { fontSize: '2rem', fontWeight: '800', color: '#1e293b', margin: 0 };
+const subtitleStyle = { color: '#64748b', margin: 0 };
 const dateBox = { backgroundColor: 'white', padding: '10px 20px', borderRadius: '12px', height: 'fit-content', fontWeight: '700', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' };
+const backButtonStyle = { background: '#ffffff', border: '1px solid #cbd5e1', color: '#1b4332', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer', fontWeight: '700', fontSize: '0.9rem', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' };
 const dashboardGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '25px' };
 const cardStyle = { backgroundColor: 'white', borderRadius: '25px', padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' };
 const cardHeader = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' };
