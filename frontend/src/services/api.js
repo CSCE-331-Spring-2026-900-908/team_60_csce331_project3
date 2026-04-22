@@ -60,12 +60,18 @@ export async function placeOrder(orderData) {
 }
 
 export async function updateOrderStatus(orderId, status) {
-  const response = await fetch(`${API_BASE}/orders/${orderId}`, fetchConfig({
+  const response = await fetch(`${API_BASE}/orders/${orderId}`, {
     method: "PUT",
-    body: JSON.stringify({ status }),
-  }));
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status })
+  });
 
-  if (!response.ok) throw new Error("Failed to update order status");
+  if (!response.ok) {
+    // Log the error detail so we know exactly why it failed
+    const errorData = await response.text(); 
+    console.error("Server error:", errorData);
+    throw new Error("Failed to update order status");
+  }
   return response.json();
 }
 
