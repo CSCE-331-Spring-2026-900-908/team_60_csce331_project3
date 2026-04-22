@@ -7,10 +7,13 @@ import CashierPage from "./pages/CashierPage";
 import LoginSuccess from "./pages/LoginSuccess";
 import ManagerDashboard from "./components/ManagerDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Zoom from "./components/Zoom";
+import "./styles/Zoom.css";
 
 export default function App() {
   return (
     <BrowserRouter>
+      <Zoom />
       <Routes>
         {/* Portal access via root or /portal */}
         <Route path="/" element={<PortalPage />} />
