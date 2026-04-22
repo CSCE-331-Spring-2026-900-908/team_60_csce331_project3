@@ -97,9 +97,6 @@ export default function KitchenPage() {
               <div key={order.order_id} style={orderCard}>
                 <div style={cardHeader}>
                   <div style={orderBadge}>#{order.order_id}</div>
-                  <span style={timeText}>
-                    {new Date(order.order_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                  </span>
                 </div>
 
                 <div style={itemsArea}>
@@ -143,7 +140,6 @@ const orderGrid = { display: "grid", gridTemplateColumns: "repeat(auto-fill, min
 const orderCard = { background: "white", borderRadius: "30px", padding: "1.5rem", display: 'flex', flexDirection: 'column', boxShadow: '0 10px 30px rgba(27,67,50,0.05)', border: '1px solid rgba(27,67,50,0.05)' };
 const cardHeader = { display: "flex", justifyContent: "space-between", alignItems: 'center', marginBottom: '1.5rem' };
 const orderBadge = { background: '#1b4332', color: 'white', padding: '5px 15px', borderRadius: '50px', fontWeight: '800' };
-const timeText = { opacity: 0.5, fontWeight: '700', fontSize: '0.9rem' };
 const itemsArea = { flex: 1, marginBottom: '2rem' };
 const drinkRow = { marginBottom: '1.2rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f8f1' };
 const drinkName = { fontSize: '1.2rem', fontWeight: '700', color: '#1b4332' };
