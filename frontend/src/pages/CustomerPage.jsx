@@ -409,7 +409,7 @@ export default function CustomerPage() {
 
 // --- STYLES (Kept Original Aura Styling) ---
 const auraContainer = { backgroundColor: "#e8f5e9", color: "#1b4332", minHeight: "100vh", padding: "2rem", position: 'relative' };
-const backButtonStyle = { position: 'absolute', top: '30px', left: '40px', zIndex: 100, textDecoration: 'none', color: '#1b4332', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(10px)', padding: '10px 22px', borderRadius: '50px', border: '1px solid rgba(27, 67, 50, 0.1)' };
+const backButtonStyle = { position: 'absolute', top: '30px', left: '40px', zIndex: 100, textDecoration: 'none', color: '#1b4332', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(10px)', padding: '10px 22px', borderRadius: '50px', border: '1px solid rgba(27, 67, 50, 0.1)', display: 'flex', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' };
 const auraHeader = { marginBottom: "3rem", marginTop: "40px" };
 const headerContent = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', maxWidth: '1400px', margin: '0 auto' };
 const logoStyle = { margin: 0, fontSize: "3.5rem", fontWeight: "800", color: "#1b4332", letterSpacing: '-1px' };
