@@ -55,15 +55,16 @@ router.get('/product-usage', async (req, res) => {
 router.post("/employees", async (req, res) => {
   const { name, role } = req.body;
   try {
-    // We fetch the max ID to increment it, or you can use SERIAL in Postgres
     const idResult = await pool.query("SELECT MAX(employee_id) FROM employees");
-    const newId = (idResult.rows[0].max || 0) + 1;
+    const newId = (parseInt(idResult.rows[0].max) || 0) + 1;
 
-    await pool.query(
-      "INSERT INTO employees (employee_id, name, role) VALUES ($1, $2, $3)",
+    const result = await pool.query(
+      "INSERT INTO employees (employee_id, name, role) VALUES ($1, $2, $3) RETURNING *",
       [newId, name, role]
     );
-    res.status(201).json({ success: true, message: "Employee hired!" });
+    
+    // Returning the newly created employee object is best practice
+    res.status(201).json(result.rows[0]); 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database error during hiring." });
