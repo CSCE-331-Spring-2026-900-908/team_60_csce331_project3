@@ -111,17 +111,27 @@ export default function ManagerDashboard() {
     };
 
     const hireEmployee = async () => {
-        const name = prompt("Enter employee name:");
-        const role = prompt("Enter role (manager/cashier):")?.toLowerCase();
-        if (name && (role === 'manager' || role === 'cashier')) {
-            const res = await fetch(`${API_BASE_URL}/api/employees`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, role })
-            });
-            if (res.ok) refreshBaseData();
+    const name = prompt("Enter employee name:");
+    const role = prompt("Enter role (manager/cashier):")?.toLowerCase();
+    
+    if (name && (role === 'manager' || role === 'cashier')) {
+        // ADDED /manager to the URL path below
+        const res = await fetch(`${API_BASE_URL}/api/manager/employees`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, role })
+        });
+        
+        if (res.ok) {
+            refreshBaseData(); // This will now trigger and show the new hire
+        } else {
+            const errorData = await res.json();
+            alert("Error: " + errorData.error);
         }
-    };
+    } else if (name) {
+        alert("Invalid role. Please enter 'manager' or 'cashier'.");
+    }
+};
 
     const submitMenuItem = async () => {
         if(!menuForm.name || !menuForm.base_price) return alert("Fill required fields");
