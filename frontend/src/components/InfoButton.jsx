@@ -380,8 +380,7 @@ const panelHeader = {
   display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0,
 };
 const panelTitle = { margin: 0, fontSize: "1.6rem", fontWeight: 800, color: "white", letterSpacing: "-0.5px" };
-const panelSubtitle = { margin: "4px 0 0", fontSize: "0.7rem", color: "#52b788", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px" };
-const closeBtn = {
+const panelSubtitle = { margin: "4px 0 0", fontSize: "0.7rem", color: "#52b788", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", opacity: 0.9 };const closeBtn = {
   background: "transparent", border: "none", color: "rgba(255,255,255,0.7)",
   fontSize: "1.2rem", cursor: "pointer", width: "2rem", height: "2rem",
   borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
