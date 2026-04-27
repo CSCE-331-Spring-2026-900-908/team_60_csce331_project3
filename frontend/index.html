@@ -37,14 +37,9 @@
 				window.speechSynthesis.speak(msg);
 			}
 		});
-		/*prompt narration on first visit*/
-		if(localStorage.getItem("narration") === null){
-			window.addEventListener("DOMContentLoaded", () => {
-				const firstVisit = new SpeechSynthesisUtterance(
-					"Welcome to Aura Boba. Would you like to enable narration for accessibility? Press Y to enable or N to disable."
-			);
-			window.speechSynthesis.speak(firstVisit);
 
+		/*prompt narration on EVERY visit*/
+		window.addEventListener("DOMContentLoaded", () => {
 			/*show a visible dialog for partially sight users */
 			const banner = document.createElement("div");
 			banner.style.cssText = `
@@ -67,10 +62,19 @@
 				if(enabled){
 					const confirmMsg = new SpeechSynthesisUtterance("Narration is enabled. Press Alt and N simultaneously to toggle narration on and off.");
 					window.speechSynthesis.speak(confirmMsg);
+				} else{
+					const negationMsg = new SpeechSynthesisUtterance("Narration is disabled. Press Alt and N simultaneously to toggle narration on and off.");
+					window.speechSynthesis.speak(negationMsg);
 				}
 			};
-			document.getElementById("narration-no").onclick = () => confirm(false);
-			document.getElementById("narration-yes").onclick = () => confirm(true);
+
+			const speakPrompt = () => {
+				const msg = new SpeechSynthesisUtterance(
+					"Welcome to Aura Boba. Would you like to enable text narration? Press Y to enable or N to disable."
+				);
+				window.speechSynthesis.speak(msg);		
+	
+			};
 			
 			const handler = (e) => {
 				if(e.key === "Y" || e.key === "y"){
@@ -82,9 +86,10 @@
 					document.removeEventListener("keydown", handler);
 				}
 			};
-			document.addEventListener("keydown", handler);
+			document.addEventListener("pointerdown", speakPrompt, { once : true });
+			document.addEventListener("keydown", handler, { once : true });
 			});
-		}	
+			
 
 		/*keyboard and tab navigation narrator */
 		document.addEventListener("focusin", (e) =>{
