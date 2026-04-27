@@ -40,10 +40,10 @@
 
                 /*prompt narration on first visit*/
                         window.addEventListener("DOMContentLoaded", () => {
-                                const NarrationPref = localStorage.getItem("narration");
+                                const narrationPref = localStorage.getItem("narration");
 
                                 if(narrationPref !== null){
-                                        narrationEnable = storedPref === "true";
+                                        narrationEnable = narrationPref === "true";
                                         if(narrationEnable){
                                                 const msg = new SpeechSynthesisUtterance("Narration is enabled");
                                                 window.speechSynthesis.speak(msg);
