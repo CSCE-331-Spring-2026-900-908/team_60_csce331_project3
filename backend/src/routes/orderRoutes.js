@@ -56,18 +56,17 @@ router.get("/", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   const client = await pool.connect();
-  // 1. Debugging: Log what we received
-  console.log("DEBUG: POST /api/orders received body:", req.body);
+  const { total_amount, items, customer_id, is_redemption } = req.body; 
+
+  // 1. Debugging: Log exactly what arrives at the backend
+  console.log("DEBUG: Incoming Order | ID:", customer_id, "| Total:", total_amount, "| Type:", typeof customer_id);
   
   try {
-    const { total_amount, items, customer_id, is_redemption } = req.body; 
-    
-    // 2. Safer ID handling: If customer_id is falsy or invalid, default to '1'
-    let finalCustomerId = (customer_id && customer_id !== "undefined" && customer_id !== "null") 
-      ? String(customer_id) 
-      : "1";
-
-    console.log("DEBUG: finalCustomerId set to:", finalCustomerId);
+    // 2. Fail-safe ID handling
+    let finalCustomerId = "1";
+    if (customer_id && customer_id !== "undefined" && customer_id !== "null") {
+        finalCustomerId = String(customer_id);
+    }
 
     await client.query('BEGIN');
 
@@ -87,12 +86,12 @@ router.post("/", async (req, res) => {
     for (const item of items) {
       currentItemId++; 
       await client.query(
-        'INSERT INTO public.orderitems (order_item_id, order_id, menu_item_id, quantity, price, size_name) VALUES ($1, $2, $3, $4, $5, $6)',
-        [currentItemId, newOrderId, item.menu_item_id, item.quantity || 1, item.price || 0, item.size_name || null]
+        'INSERT INTO public.orderitems (order_item_id, order_id, menu_item_id, quantity, price) VALUES ($1, $2, $3, $4, $5)',
+        [currentItemId, newOrderId, item.menu_item_id, item.quantity || 1, item.price || 0]
       );
     }
 
-    // 5. Stamp Logic: Only attempt if customer exists in DB
+    // 5. Stamp Logic
     if (finalCustomerId !== "1") {
       if (is_redemption) {
         await client.query(
@@ -113,9 +112,9 @@ router.post("/", async (req, res) => {
 
   } catch (err) {
     await client.query('ROLLBACK');
-    // 6. Detailed error logging to help you identify if it's a DB constraint issue
-    console.error("ORDER POST ERROR:", err.message);
-    res.status(500).json({ error: "Failed to place order: " + err.message });
+    // 6. FORCE the error to be loud so your frontend alert shows the real reason
+    console.error("!!! FATAL DB ERROR !!!", err);
+    res.status(500).json({ error: "DB ERROR: " + err.message });
   } finally {
     client.release();
   }

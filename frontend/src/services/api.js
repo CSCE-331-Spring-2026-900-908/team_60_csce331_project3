@@ -45,19 +45,38 @@ export async function fetchTopItems() {
   return response.json();
 }
 
-export async function placeOrder(orderData) {
-  const response = await fetch(`${API_BASE}/orders`, fetchConfig({
-    method: "POST",
-    body: JSON.stringify(orderData),
-  }));
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to place order in database");
+const placeOrder = async (orderData) => {
+  try {
+    const response = await fetch(`${API_URL}/api/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData),
+    });
+
+    // 1. Get the raw text first, in case the server crashes and doesn't send JSON
+    const text = await response.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      result = { error: text }; // Fallback if the server sent raw HTML/Text
+    }
+
+    if (!response.ok) {
+      // 2. This will now show the REAL database error from the backend
+      const errorMessage = result.error || result.message || text || "Unknown server error";
+      console.error("SERVER ERROR RESPONSE:", errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    return result;
+  } catch (err) {
+    console.error("DEBUG ERROR:", err);
+    // 3. This alert will now display the exact error message
+    alert("DATABASE ERROR: " + err.message);
+    throw err;
   }
-  
-  return response.json();
-}
+};
 
 export async function updateOrderStatus(orderId, status) {
   const response = await fetch(`${API_BASE}/orders/${orderId}`, {
