@@ -395,7 +395,14 @@ export default function CustomerPage() {
                 <p style={itemDescription}>{item.description}</p>
                 <div style={priceActionRow}>
                   <span style={priceText}>from ${Number(getItemSizes(item)[0]?.price || item.base_price).toFixed(2)}</span>
-                  <button style={auraAddBtn} onClick={() => openToppings(item)}>customize +</button>
+                  <button 
+			style={auraAddBtn} 
+			onClick={() => openToppings(item)}
+			aria-label= {`Customize ${item.name}`}
+			>	
+			customize +
+		</button>
+			
                 </div>
               </div>
             ))}
@@ -416,9 +423,21 @@ export default function CustomerPage() {
                   {item.toppings.map(t => <div key={t.menu_item_id} style={{fontSize:'0.75rem', color:'#64748b'}}>+ {t.name.toLowerCase()}</div>)}
                 </div>
                 <div style={auraQtyControls}>
-                  <button style={auraQtyBtn} onClick={() => changeQuantity(item.cartId, -1)}>-</button>
+                  <button 
+			style={auraQtyBtn} 
+			onClick={() => changeQuantity(item.cartId, -1)}
+			aria-label={`Decrease Quantity of ${item.name}`}
+			>
+			-
+		  </button>
                   <span style={{minWidth: '20px', textAlign: 'center'}}>{item.quantity}</span>
-                  <button style={auraQtyBtn} onClick={() => changeQuantity(item.cartId, 1)}>+</button>
+                  <button 
+			style={auraQtyBtn} 
+			onClick={() => changeQuantity(item.cartId, 1)}
+			aria-label={`Increase Quantity of ${item.name}`}
+			>
+			+
+		</button>
                 </div>
               </div>
             ))}
