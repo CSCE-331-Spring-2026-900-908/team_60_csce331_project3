@@ -492,7 +492,7 @@ const priceText = { fontSize: "1.1rem", fontWeight: "800", color: "#2d6a4f" };
 const auraAddBtn = { backgroundColor: "#2d6a4f", color: "white", border: "none", borderRadius: "50px", padding: "0.5rem 1.2rem", cursor: "pointer", fontWeight: "700" };
 const glassCart = { background: "rgba(255, 255, 255, 0.8)", backdropFilter: "blur(20px)", borderRadius: "32px", padding: "2rem", position: "sticky", top: "2rem", border: "1px solid rgba(255, 255, 255, 0.5)", maxHeight: "80vh", display: "flex", flexDirection: "column" };
 const modalOverlay = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(27, 67, 50, 0.4)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' };
-const auraModal = { background: 'white', padding: '3rem', borderRadius: '40px', width: '500px', maxWidth: '90%', textAlign: 'center' };
+const auraModal = { background: 'white', padding: '2.5rem', borderRadius: '40px', width: 'min(920px, 94vw)', maxHeight: '90vh', overflowY: 'auto', textAlign: 'center' };
 const gachaContainer = { display: 'flex', justifyContent: 'center', width: '100%', paddingTop: '2rem' };
 const gachaCard = { background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(20px)', borderRadius: '40px', padding: '3rem', width: '100%', maxWidth: '450px', textAlign: 'center', border: '2px solid #c8e6c9' };
 const resultBox = { background: 'white', borderRadius: '30px', padding: '2rem', border: '4px solid', marginBottom: '2rem' };
@@ -500,7 +500,7 @@ const gachaSpinBtn = (hasRolls) => ({ width: '100%', padding: '1.2rem', backgrou
 const sizePicker = { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.75rem', margin: '1.5rem 0 0.5rem' };
 const sizeBtn = { padding: '0.85rem', border: '1px solid #c8e6c9', borderRadius: '18px', background: '#f8fff8', color: '#2d6a4f', cursor: 'pointer', fontWeight: '700' };
 const activeSizeBtn = { ...sizeBtn, background: '#2d6a4f', color: 'white' };
-const toppingGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', margin: '2rem 0' };
+const toppingGrid = { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '1rem', margin: '2rem 0' };
 const toppingBtn = { padding: '1rem', border: '1px solid #c8e6c9', borderRadius: '20px', cursor: 'pointer', fontWeight: '600' };
 const auraAddBtnLarge = { width:'100%', padding:'1.2rem', background:'#1b4332', color:'white', border:'none', borderRadius:'50px', fontWeight:'700', cursor:'pointer' };
 const cancelBtn = { border:'none', background:'none', marginTop:'15px', color:'#64748b', cursor:'pointer' };
