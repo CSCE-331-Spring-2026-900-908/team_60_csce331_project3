@@ -79,7 +79,7 @@ export default function KitchenPage() {
 		e.preventDefault();
 		window.narrate("Returning to Home Portal Page.");
 		setTimeout(() => {
-			window.location.herf = "/";
+			window.location.href = "/";
 		}, 300);
 	}}	
       >
