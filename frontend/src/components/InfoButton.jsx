@@ -106,10 +106,62 @@ const BEYOND_FEATURES = [
   },
 ];
 
+const A11Y_FEATURES = [
+  {
+    icon: "🔍",
+    name: "Text Size Controls",
+    persona: "For Jacob — visual impairment",
+    color: "#52b788",
+    steps: [
+      "Click the 🔍 button fixed to the bottom-left corner of any page.",
+      "Use A+ to grow text and A− to shrink it across five levels: 100% → 125% → 150% → 175% → 200%.",
+      "Click Reset to jump back to 100% at any time.",
+      "Your chosen size is saved and remembered on your next visit.",
+    ],
+  },
+  {
+    icon: "🔎",
+    name: "Live Magnifier Lens",
+    persona: "For Jacob — visual impairment",
+    color: "#52b788",
+    steps: [
+      "Open the accessibility panel (🔍 button) and toggle the Lens switch.",
+      "Or press M on your keyboard to toggle it instantly from anywhere.",
+      "Hover over any text — a floating lens appears showing that text at ~1.85× its original size.",
+      "Press Esc or M again to dismiss it.",
+    ],
+  },
+  {
+    icon: "🌐",
+    name: "Language Translation",
+    persona: "For Maria — bilingual / Spanish speaker",
+    color: "#3b82f6",
+    steps: [
+      "On the Customer Kiosk page, look for the language selector.",
+      "Choose your preferred language (e.g. Spanish) from the dropdown.",
+      "All visible menu text, labels, and navigation are re-rendered.",
+      "Optimised for mobile — works on phones and tablets.",
+    ],
+  },
+  {
+    icon: "⌨️",
+    name: "Screen Reader & Keyboard Navigation",
+    persona: "For Emily — limited hand mobility",
+    color: "#f59e0b",
+    steps: [
+      "All interactive elements carry ARIA labels for screen readers.",
+      "Tab moves focus forward through buttons and form fields.",
+      "Enter or Space activates the focused element.",
+      "Buttons use enlarged hit-boxes to reduce precision needed.",
+    ],
+  },
+];
+
 export default function InfoButton() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("team");
   const [expandedTeam, setExpandedTeam] = useState(null);
+  const [expandedA11y, setExpandedA11y] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -259,7 +311,36 @@ export default function InfoButton() {
               )}
 
               {tab === "a11y" && (
-                <p style={{ color: "#64748b", fontSize: "0.85rem" }}>Accessibility content coming in next commit...</p>
+                <div style={a11yContainer}>
+                  <p style={beyondIntro}>Aura Boba was built with three accessibility personas in mind.</p>
+                  {A11Y_FEATURES.map((f, i) => (
+                    <div key={i} style={{ ...a11yCard, borderLeftColor: f.color }}>
+                      <div
+                        style={a11yHeader}
+                        onClick={() => setExpandedA11y(expandedA11y === i ? null : i)}
+                      >
+                        <div style={a11yTitleRow}>
+                          <span style={{ ...a11yBadge, background: f.color }}>{f.icon}</span>
+                          <div>
+                            <div style={a11yName}>{f.name}</div>
+                            <div style={a11yPersona}>{f.persona}</div>
+                          </div>
+                        </div>
+                        <span style={chevron}>{expandedA11y === i ? "▲" : "▼"}</span>
+                      </div>
+                      {expandedA11y === i && (
+                        <ol style={stepList}>
+                          {f.steps.map((step, j) => (
+                            <li key={j} style={stepItem}>
+                              <span style={{ ...stepNum, background: f.color }}>{j + 1}</span>
+                              <span style={stepText}>{step}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
 
             </div>
@@ -356,3 +437,14 @@ const beyondTop = { display: "flex", alignItems: "center", gap: "0.7rem", margin
 const beyondBadge = { width: "2rem", height: "2rem", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", flexShrink: 0 };
 const beyondName = { fontWeight: 700, fontSize: "1rem" };
 const beyondDesc = { margin: 0, fontSize: "0.82rem", color: "#64748b", lineHeight: 1.6 };
+const a11yContainer = { display: "flex", flexDirection: "column", gap: "0.85rem" };
+const a11yCard = { background: "white", borderRadius: "14px", border: "1px solid #e2e8f0", borderLeft: "5px solid", overflow: "hidden" };
+const a11yHeader = { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.2rem", cursor: "pointer" };
+const a11yTitleRow = { display: "flex", alignItems: "center", gap: "0.75rem" };
+const a11yBadge = { width: "2.2rem", height: "2.2rem", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", flexShrink: 0 };
+const a11yName = { fontWeight: 700, fontSize: "0.92rem", color: "#1b4332" };
+const a11yPersona = { fontSize: "0.72rem", color: "#64748b", fontStyle: "italic" };
+const stepList = { margin: 0, padding: "0.75rem 1.2rem 1rem", listStyle: "none", borderTop: "1px solid #f1f8f1", display: "flex", flexDirection: "column", gap: "0.55rem", background: "#fafffe" };
+const stepItem = { display: "flex", alignItems: "flex-start", gap: "0.6rem" };
+const stepNum = { width: "1.3rem", height: "1.3rem", borderRadius: "50%", color: "white", fontSize: "0.65rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px" };
+const stepText = { fontSize: "0.8rem", color: "#334155", lineHeight: 1.5 };
