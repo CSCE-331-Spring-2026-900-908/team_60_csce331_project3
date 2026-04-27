@@ -53,17 +53,22 @@ router.get("/", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   const client = await pool.connect();
+  // 1. Debugging: Log what we received
+  console.log("DEBUG: POST /api/orders received body:", req.body);
+  
   try {
     const { total_amount, items, customer_id, is_redemption } = req.body; 
     
-    // Ensure customer_id is treated as a String for Google IDs
-    const finalCustomerId = (customer_id && customer_id !== "undefined" && customer_id !== "null") 
+    // 2. Safer ID handling: If customer_id is falsy or invalid, default to '1'
+    let finalCustomerId = (customer_id && customer_id !== "undefined" && customer_id !== "null") 
       ? String(customer_id) 
       : "1";
 
+    console.log("DEBUG: finalCustomerId set to:", finalCustomerId);
+
     await client.query('BEGIN');
 
-    // 1. Create the Order
+    // 3. Create the Order
     const orderResult = await client.query(
       `INSERT INTO public.orders (customer_id, employee_id, date, status, total_amount, time, z_reported) 
        VALUES ($1, 1, CURRENT_DATE, 'pending', $2, LOCALTIME, false) 
@@ -72,7 +77,7 @@ router.post("/", async (req, res) => {
     );
     const newOrderId = orderResult.rows[0].order_id;
 
-    // 2. Handle Order Items
+    // 4. Handle Order Items
     const maxIdResult = await client.query("SELECT COALESCE(MAX(order_item_id), 0) AS max_id FROM public.orderitems");
     let currentItemId = parseInt(maxIdResult.rows[0].max_id, 10);
 
@@ -84,16 +89,14 @@ router.post("/", async (req, res) => {
       );
     }
 
-    // 3. Aura Boba Stamp Logic
+    // 5. Stamp Logic: Only attempt if customer exists in DB
     if (finalCustomerId !== "1") {
       if (is_redemption) {
-        // Reset stamps to 0 or subtract 10, ensuring they don't go below 0
         await client.query(
           `UPDATE public.customers SET stamps = GREATEST(stamps - 10, 0) WHERE customer_id = $1`, 
           [finalCustomerId]
         );
       } else {
-        // Standard purchase: 1 stamp, with a 20% chance for a bonus
         let stampsEarned = Math.random() <= 0.20 ? 2 : 1;
         await client.query(
           `UPDATE public.customers SET stamps = stamps + $1 WHERE customer_id = $2`, 
@@ -107,8 +110,9 @@ router.post("/", async (req, res) => {
 
   } catch (err) {
     await client.query('ROLLBACK');
+    // 6. Detailed error logging to help you identify if it's a DB constraint issue
     console.error("ORDER POST ERROR:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Failed to place order: " + err.message });
   } finally {
     client.release();
   }

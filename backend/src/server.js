@@ -112,39 +112,27 @@ app.post("/api/auth/google", async (req, res) => {
             audience: CLIENT_ID,
         });
         const payload = ticket.getPayload();
-        const userEmail = payload.email;
-        const googleId = payload.sub;
-        const fullName = payload.name;
+        const { email: userEmail, sub: googleId, name: fullName } = payload;
 
         const managers = ["ok.samgarces@gmail.com", "reveille.bubbletea@gmail.com", "ibrahimerandhawa@gmail.com", "4andrew.siv@gmail.com", "christianb62791@gmail.com", "rch27@tamu.edu"];
         const cashiers = ["purigarv@tamu.edu", "cqb.23000@tamu.edu", "andrewsiv14@tamu.edu", "garcesam0@tamu.edu", "ibrahime@tamu.edu"];
+        
+        let role = managers.includes(userEmail) ? "manager" : (cashiers.includes(userEmail) ? "cashier" : "customer");
 
-        let role = "customer";
-        if (managers.includes(userEmail)) role = "manager";
-        else if (cashiers.includes(userEmail)) role = "cashier";
-
-        let stamps = 0; // Default for new users
+        let stamps = 0;
 
         if (role === "customer") {
-            // 1. Try to insert the user if they don't exist
-            await pool.query(
+            // ATOMIC OPERATION: Insert if new, otherwise just return the existing record
+            const result = await pool.query(
                 `INSERT INTO public.customers (customer_id, name, stamps, lucky_draw_eligible, reward_points) 
-                 VALUES ($1, $2, 0, false, 0) ON CONFLICT (customer_id) DO NOTHING`,
+                 VALUES ($1, $2, 0, false, 0) 
+                 ON CONFLICT (customer_id) DO UPDATE SET name = EXCLUDED.name
+                 RETURNING stamps`,
                 [googleId, fullName]
             );
-
-            // 2. Fetch the actual current data for this customer
-            const customerData = await pool.query(
-                "SELECT stamps FROM public.customers WHERE customer_id = $1",
-                [googleId]
-            );
-            
-            if (customerData.rows.length > 0) {
-                stamps = customerData.rows[0].stamps; // Get their real stamp count
-            }
+            stamps = result.rows[0].stamps;
         }
 
-        // 3. Send stamps back to the kiosk so it can display "7/10" etc.
         res.json({ 
             success: true, 
             role, 
