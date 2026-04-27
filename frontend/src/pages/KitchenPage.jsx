@@ -41,8 +41,8 @@ export default function KitchenPage() {
       await updateOrderStatus(id, "completed");
       setOrders(prev => prev.filter(o => o.order_id !== id));
     } catch (err) {
-      console.error(err);
-      alert("Error finishing order. Check your connection.");
+      console.error("DEBUG:", err);
+      alert("Error: " + err.message);
     }
   };
 
