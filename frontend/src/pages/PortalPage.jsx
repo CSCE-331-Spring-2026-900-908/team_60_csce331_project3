@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import Weather from "../components/Weather";
 import ChatBot from "../components/ChatBot";
 import { fetchDogFeature } from "../services/api";
-
+import { fetchJoke } from "../services/api";
 export default function PortalPage() {
   const [dogFeature, setDogFeature] = useState(null);
   const [dogError, setDogError] = useState("");
-
+  const [joke, setJoke] = useState("");
   // Logic to handle the redirect and save the clicked destination
   const handleProtectedLogin = (e, destination) => {
     e.preventDefault();
@@ -35,6 +35,26 @@ export default function PortalPage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+  let isMounted = true;
+
+  fetchJoke()
+    .then((data) => {
+      if (isMounted) {
+        setJoke(data.joke);
+      }
+    })
+    .catch(() => {
+      if (isMounted) {
+        setJoke("Why did the boba bring a dog to work? For paw-sitive customer service.");
+      }
+    });
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
 
   const cardStyle = {
     background: "rgba(255, 255, 255, 0.7)",
@@ -158,6 +178,12 @@ export default function PortalPage() {
                 <span>origin: {dogFeature?.origin || "somewhere adorable"}</span>
                 <span>life span: {dogFeature?.lifeSpan || "unknown"}</span>
                 <span>bred for: {dogFeature?.bredFor || "being a very good dog"}</span>
+                {joke && (
+                <div style={jokeCard}>
+                <p style={jokeLabel}>joke of the day</p>
+                <p style={jokeText}>{joke}</p>
+                </div>
+                )}
               </div>
             </div>
           </div>
@@ -302,4 +328,28 @@ const vibeFallback = {
   background: "rgba(255,255,255,0.72)",
   color: "#64748b",
   fontWeight: "600",
+};
+
+const jokeCard = {
+  marginTop: "1.25rem",
+  padding: "1rem 1.15rem",
+  borderRadius: "18px",
+  background: "rgba(232,245,233,0.75)",
+  border: "1px solid rgba(45,106,79,0.14)",
+};
+
+const jokeLabel = {
+  margin: "0 0 0.35rem",
+  fontSize: "0.7rem",
+  fontWeight: "800",
+  textTransform: "uppercase",
+  letterSpacing: "0.12rem",
+  color: "#2d6a4f",
+};
+
+const jokeText = {
+  margin: 0,
+  fontSize: "0.9rem",
+  color: "#64748b",
+  lineHeight: 1.5,
 };
