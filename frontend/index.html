@@ -3,129 +3,139 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="referrer" content="no-referrer-when-downgrade">
-    
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aura Boba</title>
-	<script>
-		let narrationEnable = localStorage.getItem("narration") === "true"
-		
-		/* global narration */
-		window.narrate = function(text){
-			if(!narrationEnable){
-				return;
-			}
-			window.speechSynthesis.cancel();
-			const narratorUtter = new SpeechSynthesisUtterance(text);
-			narratorUtter.rate = 1;
-			narratorUtter.pitch = 1;
-			window.speechSynthesis.speak(narratorUtter);
+        <script>
+                let narrationEnable = localStorage.getItem("narration") === "true"
 
-		};
+                /* global narration */
+                window.narrate = function(text){
+                        if(!narrationEnable){
+                                return;
+                        }
+                        window.speechSynthesis.cancel();
+                        const narratorUtter = new SpeechSynthesisUtterance(text);
+                        narratorUtter.rate = 1;
+                        narratorUtter.pitch = 1;
+                        window.speechSynthesis.speak(narratorUtter);
 
-
-		/* keyboard shortcut of alt + n to allow for narrator to be enabled after first visit */
-		document.addEventListener("keydown", (e) => {
-			if(e.key === "n" && e.altKey){
-				narrationEnable = !narrationEnable;
-				localStorage.setItem("narration", narrationEnable);
-		
-				window.speechSynthesis.cancel();
-				const msg = new SpeechSynthesisUtterance(
-					narrationEnable ? "Narration enabled" : "Narration disabled"
-				);
-				window.speechSynthesis.speak(msg);
-			}
-		});
-
-		/*prompt narration on EVERY visit*/
-			window.addEventListener("DOMContentLoaded", () => {
-				/*show a visible dialog for partially sight users */
-				const banner = document.createElement("div");
-				banner.id = "narration-banner";
-				banner.style.cssText = `
-				    position: fixed; top: 0; left: 0; right: 0;
-				    background: #222; color: white; padding: 16px;
-				    text-align: center; z-index: 9999; font-size: 16px;
-				`;
-			banner.innerHTML = `
-			    Enable narration for accessibility?
-			    <button id = "narration-yes" style = "margin: 0 8px; padding: 6px 16px; cursor: pointer;">Yes (Y) </button>
-			    <button id = "narration-no" style = "margin: 0 8px; padding: 6px 16px; cursor: pointer;"> No (N) </button>
-			`;
-
-				document.body.appendChild(banner);
-				
-				const confirm = (enabled) => {
-					narrationEnable = enabled;
-					localStorage.setItem("narration", enabled);
-					banner.remove();
-					if(enabled){
-						const confirmMsg = new SpeechSynthesisUtterance("Narration is enabled. Press Alt and N simultaneously to toggle narration on and off.");
-						window.speechSynthesis.speak(confirmMsg);
-					} else{
-						const negationMsg = new SpeechSynthesisUtterance("Narration is disabled. Press Alt and N simultaneously to toggle narration on and off.");
-						window.speechSynthesis.speak(negationMsg);
-					}
-				};
-
-				banner.addEventListener("click", (e) => {
-					if(e.target.id === "narration-yes"){
-						confirm(true);
-					}
-					if(e.target.id === "narration-no"){
-						confirm(false);
-					}
-				});
-
-				const speakPrompt = () => {
-					const msg = new SpeechSynthesisUtterance(
-						"Welcome to Aura Boba. Would you like to enable text narration? Press Y to enable or N to disable."
-					);
-					window.speechSynthesis.speak(msg);		
-				};
-			
-			const handler = (e) => {
-				if(e.key === "Y" || e.key === "y"){
-					confirm(true);
-					document.removeEventListener("keydown", handler);
-				} 
-				if(e.key === "N" || e.key === "n"){
-					confirm(false);
-					document.removeEventListener("keydown", handler);
-				}
-			};
-			document.addEventListener("pointerdown", speakPrompt, { once : true });
-			document.addEventListener("keydown", handler, { once : true });
-			});
-			
-
-		/*keyboard and tab navigation narrator */
-		document.addEventListener("focusin", (e) =>{
-			const el = e.target;
-			const text = el.getAttribute("aria-label") || el.getAttribute("placeholder") || el.getAttribute("title") || el.innerText?.trim();
-			if(text){
-				window.narrate(text);
-			}	
-
-	
-		});
-
-		/* narration on mouse hover */
-		document.addEventListener("mouseover", (e)=> {
-			const el = e.target;
-			const text = el.getAttribute("aria-label") || el.getAttribute("title") || el.innerText?.trim();
-			if( (text) && (text.length < 100) ){
-				window.narrate(text);
-			}	
-
-	
-		});
+                };
 
 
+                /* keyboard shortcut of alt + n to allow for narrator to be enabled after first visit */
+                document.addEventListener("keydown", (e) => {
+                        if(e.key === "n" && e.altKey){
+                                narrationEnable = !narrationEnable;
+                                localStorage.setItem("narration", narrationEnable);
 
-	</script>
-	
+                                window.speechSynthesis.cancel();
+                                const msg = new SpeechSynthesisUtterance(
+                                        narrationEnable ? "Narration enabled" : "Narration disabled"
+                                );
+                                window.speechSynthesis.speak(msg);
+                        }
+                });
+
+                /*prompt narration on first visit*/
+                        window.addEventListener("DOMContentLoaded", () => {
+                                const NarrationPref = localStorage.getItem("narration");
+
+                                if(narrationPref !== null){
+                                        narrationEnable = storedPref === "true";
+                                        if(narrationEnable){
+                                                const msg = new SpeechSynthesisUtterance("Narration is enabled");
+                                                window.speechSynthesis.speak(msg);
+                                        }
+                                        return;
+                                }
+                                /*show a visible dialog on first visit for partially sight users */
+                                const banner = document.createElement("div");
+                                banner.id = "narration-banner";
+                                banner.style.cssText = `
+                                    position: fixed; top: 0; left: 0; right: 0;
+                                    background: #222; color: white; padding: 16px;
+                                    text-align: center; z-index: 9999; font-size: 16px;
+                                `;
+                        banner.innerHTML = `
+                            Enable narration for accessibility?
+                            <button id = "narration-yes" style = "margin: 0 8px; padding: 6px 16px; cursor: pointer;">Yes (Y) </button>
+                            <button id = "narration-no" style = "margin: 0 8px; padding: 6px 16px; cursor: pointer;"> No (N) </button>
+                        `;
+
+                                document.body.appendChild(banner);
+
+                                const confirm = (enabled) => {
+                                        narrationEnable = enabled;
+                                        localStorage.setItem("narration", enabled);
+                                        banner.remove();
+                                        if(enabled){
+                                                const confirmMsg = new SpeechSynthesisUtterance("Narration is enabled. Press Alt and N simultaneously to toggle narration on and off.");
+                                                window.speechSynthesis.speak(confirmMsg);
+                                        } else{
+                                                const negationMsg = new SpeechSynthesisUtterance("Narration is disabled. Press Alt and N simultaneously to toggle narration on and off.");
+                                                window.speechSynthesis.speak(negationMsg);
+                                        }
+                                };
+
+                                banner.addEventListener("click", (e) => {
+                                        if(e.target.id === "narration-yes"){
+                                                confirm(true);
+                                        }
+                                        if(e.target.id === "narration-no"){
+                                                confirm(false);
+                                        }
+                                });
+
+                                const speakPrompt = () => {
+                                        const msg = new SpeechSynthesisUtterance(
+                                                "Welcome to Aura Boba. Would you like to enable text narration? Press Y to enable or N to disable."
+                                        );
+                                        window.speechSynthesis.speak(msg);
+                                };
+
+                        const handler = (e) => {
+                                if(e.key === "Y" || e.key === "y"){
+                                        confirm(true);
+                                        document.removeEventListener("keydown", handler);
+                                }
+                                if(e.key === "N" || e.key === "n"){
+                                        confirm(false);
+                                        document.removeEventListener("keydown", handler);
+                                }
+                        };
+                        document.addEventListener("pointerdown", speakPrompt, { once : true });
+                        document.addEventListener("keydown", handler, { once : true });
+                        });
+
+
+                /*keyboard and tab navigation narrator */
+                document.addEventListener("focusin", (e) =>{
+                        const el = e.target;
+                        const text = el.getAttribute("aria-label") || el.getAttribute("placeholder") || el.getAttribute("title") || el.innerText?.trim();
+                        if(text){
+                                window.narrate(text);
+                        }
+
+
+                });
+
+                /* narration on mouse hover */
+                document.addEventListener("mouseover", (e)=> {
+                        const el = e.target;
+                        const text = el.getAttribute("aria-label") || el.getAttribute("title") || el.innerText?.trim();
+                        if( (text) && (text.length < 100) ){
+                                window.narrate(text);
+                        }
+
+
+                });
+
+
+
+        </script>
+
 
 
 
@@ -152,11 +162,11 @@
     <script>
       function googleTranslateElementInit(){
         new google.translate.TranslateElement(
-          { 
-            pageLanguage: 'en', 
+          {
+            pageLanguage: 'en',
             includedLanguages: 'es,zh-CN,vi,ko,tl,ar,fr,de,ja,ru',
-            layout: google.translate.TranslateElement.InlineLayout.SIMPLE 
-          }, 
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+          },
           'translate_element'
         );
       }
@@ -165,9 +175,9 @@
   </head>
   <body>
     <div id="translate_element"></div>
-    
+
     <div id="root"></div>
-    
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
