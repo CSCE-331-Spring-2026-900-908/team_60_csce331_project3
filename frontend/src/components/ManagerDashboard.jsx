@@ -25,7 +25,7 @@ export default function ManagerDashboard() {
     const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
     const [menuForm, setMenuForm] = useState({
-        name: '', category: '', base_price: '', description: '', recipe_id: '', temperature: ''
+        name: '', category: '', base_price: '', small_price: '', medium_price: '', large_price: '', description: '', recipe_id: '', temperature: ''
     });
 
     useEffect(() => {
@@ -136,14 +136,30 @@ export default function ManagerDashboard() {
     const submitMenuItem = async () => {
         if(!menuForm.name || !menuForm.base_price) return alert("Fill required fields");
         try {
+            const normalizedCategory = menuForm.category.trim().toLowerCase();
+            const mediumPrice = parseFloat(menuForm.medium_price || menuForm.base_price);
+            const payload = {
+                ...menuForm,
+                menu_item_id: Math.floor(Math.random() * 100000),
+                base_price: mediumPrice
+            };
+
+            if (normalizedCategory !== 'topping') {
+                payload.sizes = [
+                    { size_name: 'small', price: parseFloat(menuForm.small_price || (mediumPrice - 0.5).toFixed(2)) },
+                    { size_name: 'medium', price: mediumPrice },
+                    { size_name: 'large', price: parseFloat(menuForm.large_price || (mediumPrice + 0.5).toFixed(2)) }
+                ];
+            }
+
             const res = await fetch(`${API_BASE_URL}/api/menu/menuitems`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...menuForm, menu_item_id: Math.floor(Math.random() * 100000), base_price: parseFloat(menuForm.base_price) })
+                body: JSON.stringify(payload)
             });
             if (res.ok) {
                 alert("Menu item added!");
-                setMenuForm({ name: '', category: '', base_price: '', description: '', recipe_id: '', temperature: '' });
+                setMenuForm({ name: '', category: '', base_price: '', small_price: '', medium_price: '', large_price: '', description: '', recipe_id: '', temperature: '' });
             }
         } catch (err) { console.error(err); }
     };
@@ -187,7 +203,10 @@ export default function ManagerDashboard() {
                     <div style={formGrid}>
                         <input placeholder="Item Name" value={menuForm.name} onChange={(e) => setMenuForm({...menuForm, name: e.target.value})} style={inputStyle} />
                         <input placeholder="Category" value={menuForm.category} onChange={(e) => setMenuForm({...menuForm, category: e.target.value})} style={inputStyle} />
-                        <input placeholder="Price" value={menuForm.base_price} onChange={(e) => setMenuForm({...menuForm, base_price: e.target.value})} style={inputStyle} />
+                        <input placeholder="Base / medium price" value={menuForm.base_price} onChange={(e) => setMenuForm({...menuForm, base_price: e.target.value, medium_price: e.target.value})} style={inputStyle} />
+                        <input placeholder="Small price" value={menuForm.small_price} onChange={(e) => setMenuForm({...menuForm, small_price: e.target.value})} style={inputStyle} />
+                        <input placeholder="Medium price" value={menuForm.medium_price} onChange={(e) => setMenuForm({...menuForm, medium_price: e.target.value, base_price: e.target.value})} style={inputStyle} />
+                        <input placeholder="Large price" value={menuForm.large_price} onChange={(e) => setMenuForm({...menuForm, large_price: e.target.value})} style={inputStyle} />
                         <select value={menuForm.temperature} onChange={(e) => setMenuForm({...menuForm, temperature: e.target.value})} style={inputStyle}><option value="">Temp</option><option value="C">Cold</option><option value="H">Hot</option></select>
                         <button onClick={submitMenuItem} style={{...addBtnStyle, gridColumn: 'span 2'}}>Add Item</button>
                     </div>

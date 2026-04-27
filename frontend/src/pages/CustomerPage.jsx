@@ -35,11 +35,37 @@ const drinkImageMap = {
   "oolong peach (seasonal)": "/images/drinks/oolong-peach-seasonal.jpg",
 };
 
+const SIZE_ORDER = ["small", "medium", "large"];
+
 function getDrinkImage(item) {
   return (
     drinkImageMap[item.name?.toLowerCase()] ||
     "/images/drinks/thai-milk-tea.jpg"
   );
+}
+
+function getItemSizes(item) {
+  const rawSizes = Array.isArray(item?.sizes) ? item.sizes : [];
+  if (rawSizes.length > 0) {
+    return [...rawSizes]
+      .map((size) => ({
+        size_name: size.size_name,
+        price: Number(size.price),
+      }))
+      .sort((a, b) => SIZE_ORDER.indexOf(a.size_name) - SIZE_ORDER.indexOf(b.size_name));
+  }
+
+  return [{ size_name: "medium", price: Number(item?.base_price || 0) }];
+}
+
+function getDefaultSize(item) {
+  const sizes = getItemSizes(item);
+  return sizes.find((size) => size.size_name === "medium") || sizes[0];
+}
+
+function formatSizeName(sizeName) {
+  if (!sizeName) return "";
+  return `${sizeName[0].toUpperCase()}${sizeName.slice(1)}`;
 }
 
 export default function CustomerPage() {
@@ -54,6 +80,7 @@ export default function CustomerPage() {
   const [currentUser, setCurrentUser] = useState(null); 
   const [showToppings, setShowToppings] = useState(false);
   const [pendingItem, setPendingItem] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
   const [selectedToppings, setSelectedToppings] = useState([]);
   const [weatherTemp, setWeatherTemp] = useState(null); 
   const [gachaResult, setGachaResult] = useState(null);
@@ -126,8 +153,12 @@ export default function CustomerPage() {
       cart.forEach(cartItem => {
         for(let i=0; i < cartItem.quantity; i++) {
           // If redeeming, items are effectively $0 for the order record
-          flattenedItems.push({ menu_item_id: cartItem.menu_item_id, price: isRedeeming ? 0 : cartItem.price });
-          cartItem.toppings.forEach(t => flattenedItems.push({ menu_item_id: t.menu_item_id, price: isRedeeming ? 0 : t.price }));
+          flattenedItems.push({
+            menu_item_id: cartItem.menu_item_id,
+            price: isRedeeming ? 0 : cartItem.price,
+            size_name: cartItem.size_name,
+          });
+          cartItem.toppings.forEach(t => flattenedItems.push({ menu_item_id: t.menu_item_id, price: isRedeeming ? 0 : t.price, size_name: null }));
         }
       });
 
@@ -166,7 +197,11 @@ export default function CustomerPage() {
 
   // --- HELPER LOGIC ---
   const getCleanCat = (item) => item.category ? item.category.toString().trim().toLowerCase() : "";
-  const toppingsOptions = useMemo(() => menuItems.filter(item => getCleanCat(item) === 'topping'), [menuItems]);
+  const toppingsOptions = useMemo(() => {
+    return menuItems
+      .filter(item => getCleanCat(item) === 'topping')
+      .sort((a, b) => (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" }));
+  }, [menuItems]);
   const categories = useMemo(() => {
     const rawCats = [...new Set(menuItems.map(item => getCleanCat(item)))];
     return ["all", "surprise me", "recommended", ...rawCats.filter(c => c !== 'topping' && c !== "")];
@@ -206,13 +241,18 @@ export default function CustomerPage() {
       const rarityRoll = Math.random();
       const rarity = rarityRoll < 0.6 ? 'Common' : rarityRoll < 0.9 ? 'Rare' : 'Ultra Rare';
       const rarityColor = rarity === 'Ultra Rare' ? '#f59e0b' : rarity === 'Rare' ? '#8b5cf6' : '#2d6a4f';
-      setGachaResult({ ...pick, rarity, rarityColor, price: pick.base_price });
+      setGachaResult({ ...pick, rarity, rarityColor, price: getDefaultSize(pick).price });
       setGachaRolls(prev => prev - 1);
       setGachaSpinning(false);
     }, 1500);
   };
 
-  function openToppings(item) { setPendingItem(item); setSelectedToppings([]); setShowToppings(true); }
+  function openToppings(item) {
+    setPendingItem(item);
+    setSelectedSize(getDefaultSize(item));
+    setSelectedToppings([]);
+    setShowToppings(true);
+  }
   function toggleTopping(topping) {
     setSelectedToppings(prev => 
       prev.find(t => t.menu_item_id === topping.menu_item_id)
@@ -222,11 +262,20 @@ export default function CustomerPage() {
   }
 
   function confirmAddToCart() {
-    const cartId = `${pendingItem.menu_item_id}-${selectedToppings.map(t => t.menu_item_id).sort().join('-')}`;
+    const chosenSize = selectedSize || getDefaultSize(pendingItem);
+    const cartId = `${pendingItem.menu_item_id}-${chosenSize.size_name}-${selectedToppings.map(t => t.menu_item_id).sort().join('-')}`;
     setCart((prev) => {
       const existing = prev.find(x => x.cartId === cartId);
       if (existing) return prev.map(x => x.cartId === cartId ? { ...x, quantity: x.quantity + 1 } : x);
-      return [...prev, { cartId, menu_item_id: pendingItem.menu_item_id, name: pendingItem.name, price: Number(pendingItem.base_price), quantity: 1, toppings: selectedToppings }];
+      return [...prev, {
+        cartId,
+        menu_item_id: pendingItem.menu_item_id,
+        name: pendingItem.name,
+        size_name: chosenSize.size_name,
+        price: Number(chosenSize.price),
+        quantity: 1,
+        toppings: selectedToppings
+      }];
     });
     setShowToppings(false);
   }
@@ -243,6 +292,21 @@ export default function CustomerPage() {
         <div style={modalOverlay}>
           <div style={auraModal}>
             <h2 style={itemTitle}>customize {pendingItem?.name.toLowerCase()}</h2>
+            <div style={sizePicker}>
+              {getItemSizes(pendingItem).map((size) => {
+                const isSelected = selectedSize?.size_name === size.size_name;
+                return (
+                  <button
+                    key={size.size_name}
+                    type="button"
+                    style={isSelected ? activeSizeBtn : sizeBtn}
+                    onClick={() => setSelectedSize(size)}
+                  >
+                    {formatSizeName(size.size_name)} ${Number(size.price).toFixed(2)}
+                  </button>
+                );
+              })}
+            </div>
             <div style={toppingGrid}>
               {toppingsOptions.map(t => {
                 const isSelected = selectedToppings.find(st => st.menu_item_id === t.menu_item_id);
@@ -256,7 +320,7 @@ export default function CustomerPage() {
               })}
             </div>
             <button style={auraAddBtnLarge} onClick={confirmAddToCart}>
-              add to order — ${ (Number(pendingItem?.base_price || 0) + selectedToppings.reduce((s,t)=>s+t.price,0)).toFixed(2) }
+              add to order — ${ ((selectedSize?.price || Number(pendingItem?.base_price || 0)) + selectedToppings.reduce((s,t)=>s+t.price,0)).toFixed(2) }
             </button>
             <button style={cancelBtn} onClick={()=>setShowToppings(false)}>cancel</button>
           </div>
@@ -330,7 +394,7 @@ export default function CustomerPage() {
                 <h3 style={itemTitle}>{item.name.toLowerCase()}</h3>
                 <p style={itemDescription}>{item.description}</p>
                 <div style={priceActionRow}>
-                  <span style={priceText}>${Number(item.base_price).toFixed(2)}</span>
+                  <span style={priceText}>from ${Number(getItemSizes(item)[0]?.price || item.base_price).toFixed(2)}</span>
                   <button style={auraAddBtn} onClick={() => openToppings(item)}>customize +</button>
                 </div>
               </div>
@@ -348,6 +412,7 @@ export default function CustomerPage() {
               <div key={item.cartId} style={auraCartItem}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: "600", fontSize: '0.9rem' }}>{item.name.toLowerCase()}</div>
+                  <div style={{fontSize:'0.75rem', color:'#2d6a4f'}}>{formatSizeName(item.size_name)}</div>
                   {item.toppings.map(t => <div key={t.menu_item_id} style={{fontSize:'0.75rem', color:'#64748b'}}>+ {t.name.toLowerCase()}</div>)}
                 </div>
                 <div style={auraQtyControls}>
@@ -427,12 +492,15 @@ const priceText = { fontSize: "1.1rem", fontWeight: "800", color: "#2d6a4f" };
 const auraAddBtn = { backgroundColor: "#2d6a4f", color: "white", border: "none", borderRadius: "50px", padding: "0.5rem 1.2rem", cursor: "pointer", fontWeight: "700" };
 const glassCart = { background: "rgba(255, 255, 255, 0.8)", backdropFilter: "blur(20px)", borderRadius: "32px", padding: "2rem", position: "sticky", top: "2rem", border: "1px solid rgba(255, 255, 255, 0.5)", maxHeight: "80vh", display: "flex", flexDirection: "column" };
 const modalOverlay = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(27, 67, 50, 0.4)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' };
-const auraModal = { background: 'white', padding: '3rem', borderRadius: '40px', width: '500px', maxWidth: '90%', textAlign: 'center' };
+const auraModal = { background: 'white', padding: '2.5rem', borderRadius: '40px', width: 'min(920px, 94vw)', maxHeight: '90vh', overflowY: 'auto', textAlign: 'center' };
 const gachaContainer = { display: 'flex', justifyContent: 'center', width: '100%', paddingTop: '2rem' };
 const gachaCard = { background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(20px)', borderRadius: '40px', padding: '3rem', width: '100%', maxWidth: '450px', textAlign: 'center', border: '2px solid #c8e6c9' };
 const resultBox = { background: 'white', borderRadius: '30px', padding: '2rem', border: '4px solid', marginBottom: '2rem' };
 const gachaSpinBtn = (hasRolls) => ({ width: '100%', padding: '1.2rem', background: hasRolls ? '#1b4332' : '#94a3b8', color: 'white', border: 'none', borderRadius: '50px', fontWeight: '800', cursor: hasRolls ? 'pointer' : 'not-allowed' });
-const toppingGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', margin: '2rem 0' };
+const sizePicker = { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.75rem', margin: '1.5rem 0 0.5rem' };
+const sizeBtn = { padding: '0.85rem', border: '1px solid #c8e6c9', borderRadius: '18px', background: '#f8fff8', color: '#2d6a4f', cursor: 'pointer', fontWeight: '700' };
+const activeSizeBtn = { ...sizeBtn, background: '#2d6a4f', color: 'white' };
+const toppingGrid = { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '1rem', margin: '2rem 0' };
 const toppingBtn = { padding: '1rem', border: '1px solid #c8e6c9', borderRadius: '20px', cursor: 'pointer', fontWeight: '600' };
 const auraAddBtnLarge = { width:'100%', padding:'1.2rem', background:'#1b4332', color:'white', border:'none', borderRadius:'50px', fontWeight:'700', cursor:'pointer' };
 const cancelBtn = { border:'none', background:'none', marginTop:'15px', color:'#64748b', cursor:'pointer' };

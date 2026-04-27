@@ -37,40 +37,53 @@
 				window.speechSynthesis.speak(msg);
 			}
 		});
-		/*prompt narration on first visit*/
-		if(localStorage.getItem("narration") === null){
-			window.addEventListener("DOMContentLoaded", () => {
-				const firstVisit = new SpeechSynthesisUtterance(
-					"Welcome to Aura Boba. Would you like to enable narration for accessibility? Press Y to enable or N to disable."
-			);
-			window.speechSynthesis.speak(firstVisit);
 
-			/*show a visible dialog for partially sight users */
-			const banner = document.createElement("div");
-			banner.style.cssText = `
-			    position: fixed; top: 0; left: 0; right: 0;
-			    background: #222; color: white; padding: 16px;
-			    text-align: center; z-index: 9999; font-size: 16px;
-			`;
+		/*prompt narration on EVERY visit*/
+			window.addEventListener("DOMContentLoaded", () => {
+				/*show a visible dialog for partially sight users */
+				const banner = document.createElement("div");
+				banner.id = "narration-banner";
+				banner.style.cssText = `
+				    position: fixed; top: 0; left: 0; right: 0;
+				    background: #222; color: white; padding: 16px;
+				    text-align: center; z-index: 9999; font-size: 16px;
+				`;
 			banner.innerHTML = `
 			    Enable narration for accessibility?
 			    <button id = "narration-yes" style = "margin: 0 8px; padding: 6px 16px; cursor: pointer;">Yes (Y) </button>
 			    <button id = "narration-no" style = "margin: 0 8px; padding: 6px 16px; cursor: pointer;"> No (N) </button>
 			`;
 
-			document.body.appendChild(banner);		
-		
-			const confirm = (enabled) => {
-				narrationEnable = enabled;
-				localStorage.setItem("narration", enabled);
-				document.body.removeChild(banner);
-				if(enabled){
-					const confirmMsg = new SpeechSynthesisUtterance("Narration is enabled. Press Alt and N simultaneously to toggle narration on and off.");
-					window.speechSynthesis.speak(confirmMsg);
-				}
-			};
-			document.getElementById("narration-no").onclick = () => confirm(false);
-			document.getElementById("narration-yes").onclick = () => confirm(true);
+				document.body.appendChild(banner);
+				
+				const confirm = (enabled) => {
+					narrationEnable = enabled;
+					localStorage.setItem("narration", enabled);
+					banner.remove();
+					if(enabled){
+						const confirmMsg = new SpeechSynthesisUtterance("Narration is enabled. Press Alt and N simultaneously to toggle narration on and off.");
+						window.speechSynthesis.speak(confirmMsg);
+					} else{
+						const negationMsg = new SpeechSynthesisUtterance("Narration is disabled. Press Alt and N simultaneously to toggle narration on and off.");
+						window.speechSynthesis.speak(negationMsg);
+					}
+				};
+
+				banner.addEventListener("click", (e) => {
+					if(e.target.id === "narration-yes"){
+						confirm(true);
+					}
+					if(e.target.id === "narration-no"){
+						confirm(false);
+					}
+				});
+
+				const speakPrompt = () => {
+					const msg = new SpeechSynthesisUtterance(
+						"Welcome to Aura Boba. Would you like to enable text narration? Press Y to enable or N to disable."
+					);
+					window.speechSynthesis.speak(msg);		
+				};
 			
 			const handler = (e) => {
 				if(e.key === "Y" || e.key === "y"){
@@ -82,9 +95,10 @@
 					document.removeEventListener("keydown", handler);
 				}
 			};
-			document.addEventListener("keydown", handler);
+			document.addEventListener("pointerdown", speakPrompt, { once : true });
+			document.addEventListener("keydown", handler, { once : true });
 			});
-		}	
+			
 
 		/*keyboard and tab navigation narrator */
 		document.addEventListener("focusin", (e) =>{
