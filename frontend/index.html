@@ -53,12 +53,14 @@
 			    <button id = "narration-no" style = "margin: 0 8px; padding: 6px 16px; cursor: pointer;"> No (N) </button>
 			`;
 
-			document.body.appendChild(banner);		
-		
-			const confirm = (enabled) => {
-				narrationEnable = enabled;
-				localStorage.setItem("narration", enabled);
-				document.body.removeChild(banner);
+				document.body.appendChild(banner);		
+				const yesButton = banner.querySelector("#narration-yes");
+				const noButton = banner.querySelector("#narration-no");
+			
+				const confirm = (enabled) => {
+					narrationEnable = enabled;
+					localStorage.setItem("narration", enabled);
+					document.body.removeChild(banner);
 				if(enabled){
 					const confirmMsg = new SpeechSynthesisUtterance("Narration is enabled. Press Alt and N simultaneously to toggle narration on and off.");
 					window.speechSynthesis.speak(confirmMsg);
@@ -66,9 +68,12 @@
 					const negationMsg = new SpeechSynthesisUtterance("Narration is disabled. Press Alt and N simultaneously to toggle narration on and off.");
 					window.speechSynthesis.speak(negationMsg);
 				}
-			};
+				};
 
-			const speakPrompt = () => {
+				yesButton?.addEventListener("click", () => confirm(true));
+				noButton?.addEventListener("click", () => confirm(false));
+
+				const speakPrompt = () => {
 				const msg = new SpeechSynthesisUtterance(
 					"Welcome to Aura Boba. Would you like to enable text narration? Press Y to enable or N to disable."
 				);
