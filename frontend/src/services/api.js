@@ -39,6 +39,12 @@ export async function fetchSalesSummary() {
   return response.json();
 }
 
+export async function fetchDogFeature() {
+  const response = await fetch(`${API_BASE}/dogs/random`, fetchConfig());
+  if (!response.ok) throw new Error("Failed to fetch dog feature");
+  return response.json();
+}
+
 export async function fetchTopItems() {
   const response = await fetch(`${API_BASE}/manager/top-items`, fetchConfig());
   if (!response.ok) throw new Error("Failed to fetch top items");
