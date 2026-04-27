@@ -85,7 +85,7 @@ app.get("/auth/google/callback", async (req, res) => {
         
         // 3. Determine Role
         const managers = ["ok.samgarces@gmail.com", "reveille.bubbletea@gmail.com", "ibrahimerandhawa@gmail.com", "4andrew.siv@gmail.com", "christianb62791@gmail.com", "rch27@tamu.edu"];
-        const cashiers = ["purigarv@tamu.edu", "cqb.23000@tamu.edu", "andrewsiv14@tamu.edu", "garcesam0@tamu.edu", "ibrahime@tamu.edu"];`   `
+        const cashiers = ["purigarv@tamu.edu", "cqb.23000@tamu.edu", "andrewsiv14@tamu.edu", "garcesam0@tamu.edu", "ibrahime@tamu.edu"];
         
         let role = "customer";
         if (managers.includes(payload.email)) role = "manager";
@@ -234,6 +234,40 @@ app.get("/api/weather", async (req, res) => {
     // FAIL-SAFE: If government API is down, show a reasonable default 
     // so the kiosk UI doesn't look broken.
     res.json({ temp: 78, status: "fallback" });
+  }
+});
+
+app.get("/api/joke", async (req, res) => {
+  try {
+    const jokeResponse = await fetch(
+      "https://v2.jokeapi.dev/joke/Miscellaneous,Pun?blacklistFlags=nsfw,religious,political,racist,sexist,explicit"
+    );
+
+    if (!jokeResponse.ok) {
+      throw new Error("Joke API failed");
+    }
+
+    const jokeData = await jokeResponse.json();
+
+    let jokeText = "";
+
+    if (jokeData.type === "single") {
+      jokeText = jokeData.joke;
+    } else {
+      jokeText = `${jokeData.setup} ${jokeData.delivery}`;
+    }
+
+    res.json({
+      joke: jokeText,
+      source: "JokeAPI"
+    });
+  } catch (err) {
+    console.error("Joke API error:", err.message);
+
+    res.json({
+      joke: "Why did the boba tea bring a leash? Because it was walking with its paw-some mascot.",
+      source: "fallback"
+    });
   }
 });
 

@@ -114,3 +114,15 @@ export async function fetchProductUsage(startDate, endDate) {
 
   return response.json();
 }
+
+export async function fetchJoke() {
+  const response = await fetch(`${API_BASE}/joke`, {
+    credentials: "include"
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch joke");
+  }
+
+  return response.json();
+}
