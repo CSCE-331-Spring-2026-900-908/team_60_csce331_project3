@@ -71,7 +71,20 @@ export default function KitchenPage() {
 
   return (
     <div style={auraContainer}>
-      <Link to="/" style={backBtnStyle}>← portal</Link>
+      <Link 
+	to="/" 
+	style={backBtnStyle}
+	aria-label = {"Return to portal button"}
+	onClick={(e) => {
+		e.preventDefault();
+		window.narrate("Returning to Home Portal Page.");
+		setTimeout(() => {
+			window.location.herf = "/";
+		}, 300);
+	}}	
+      >
+	← portal
+      </Link>
 
       <header style={auraHeader}>
         <div>

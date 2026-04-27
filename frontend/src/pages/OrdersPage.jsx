@@ -51,7 +51,22 @@ export default function ManagerDashboard() {
 
     return (
         <div style={auraContainer}>
-            <Link to="/" style={backBtnStyle}>← portal</Link>
+            <Link 
+		to="/" 
+		style={backBtnStyle}
+		aria-label = {"Return to portal button."}
+		onClick={(e) => {
+			e.preventDefault();	
+			window.narrate("Returning to Home Portal page");
+			setTimeout = (() => {
+				window.location.href = "/";
+			}, 300);
+		
+		}}
+	    >
+		← portal
+	    
+	    </Link>
 
             <header style={auraHeader}>
                 <div>

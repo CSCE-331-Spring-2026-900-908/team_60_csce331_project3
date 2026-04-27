@@ -33,7 +33,21 @@ export default function MenuBoardPage() {
 
   return (
     <div style={pageStyle}>
-      <Link to="/" style={backBtnStyle}>← portal</Link>
+      <Link 
+	to="/" 
+	style={backBtnStyle}
+	aria-label = {"Return to portal button"}
+	onClick = {(e) => {
+		e.preventDefault();
+		window.narrate("Returning to Home Portal Page.");
+
+		setTimeout(() => {
+			window.location.href = "/";
+		}, 300); 
+	}}
+      >
+	← portal
+      </Link>
 
       <div style={{ position: "absolute", top: "2rem", right: "2rem", background: "#2d6a4f", padding: "0.5rem 1.2rem", borderRadius: "50px" }}>
         <Weather />
