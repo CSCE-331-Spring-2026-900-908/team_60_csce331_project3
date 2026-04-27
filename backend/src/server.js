@@ -153,6 +153,38 @@ app.use("/api/inventory", inventoryRoutes);
 app.use("/api/manager", managerRoutes);
 app.use("/api/reports", reportRoutes);
 
+app.get("/api/dogs/random", async (req, res) => {
+  try {
+    const response = await fetch("https://dog.ceo/api/breeds/image/random");
+
+    if (!response.ok) {
+      throw new Error(`Dog CEO API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const imageUrl = data?.message || null;
+    const breedSlug = imageUrl?.split("/breeds/")[1]?.split("/")[0] || "";
+    const breedName = breedSlug
+      ? breedSlug
+          .split("-")
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(" ")
+      : "Mystery Pup";
+
+    res.json({
+      imageUrl,
+      breedName,
+      temperament: "playful, loyal, and unexpectedly good for team morale",
+      lifeSpan: "unknown",
+      origin: "dog.ceo's extremely photogenic archives",
+      bredFor: "brightening the portal",
+    });
+  } catch (error) {
+    console.error("Dog CEO API error:", error.message);
+    res.status(503).json({ error: "Dog feature is unavailable right now." });
+  }
+});
+
 // --- 5. AI Chat & Weather ---
 app.post("/api/chat", async (req, res) => {
   const apiKey = process.env.GROQ_API_KEY;
