@@ -2,6 +2,25 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from "react-router-dom";
 import '../App.css'; 
 
+const SIZE_ORDER = ['small', 'medium', 'large'];
+
+const getItemSizes = (item) => {
+    const rawSizes = Array.isArray(item?.sizes) ? item.sizes : [];
+    if (rawSizes.length > 0) {
+        return [...rawSizes]
+            .map(size => ({ size_name: size.size_name, price: parseFloat(size.price) }))
+            .sort((a, b) => SIZE_ORDER.indexOf(a.size_name) - SIZE_ORDER.indexOf(b.size_name));
+    }
+    return [{ size_name: 'medium', price: parseFloat(item?.base_price || 0) }];
+};
+
+const getDefaultSize = (item) => {
+    const sizes = getItemSizes(item);
+    return sizes.find(size => size.size_name === 'medium') || sizes[0];
+};
+
+const formatSizeName = (sizeName) => sizeName ? `${sizeName[0].toUpperCase()}${sizeName.slice(1)}` : '';
+
 const CashierPage = () => {
     // --- DYNAMIC URL LOGIC ---
     const VITE_URL = import.meta.env.VITE_API_URL;
@@ -30,7 +49,12 @@ const CashierPage = () => {
     }, [API_BASE]);
 
     const drinks = useMemo(() => menu.filter(item => item.category?.toLowerCase().trim() !== 'topping'), [menu]);
-    const toppingsOptions = useMemo(() => menu.filter(item => item.category?.toLowerCase().trim() === 'topping'), [menu]);
+    const toppingsOptions = useMemo(
+        () => menu
+            .filter(item => item.category?.toLowerCase().trim() === 'topping')
+            .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })),
+        [menu]
+    );
 
     useEffect(() => {
         const newTotal = order.reduce((acc, item) => {
@@ -42,11 +66,14 @@ const CashierPage = () => {
     }, [order]);
 
     const addToOrder = (item) => {
+        const defaultSize = getDefaultSize(item);
         const newItem = { 
             ...item, 
             order_uid: Date.now() + Math.random(), 
             toppings: [],
-            quantity: 1
+            quantity: 1,
+            size_name: defaultSize.size_name,
+            base_price: defaultSize.price
         };
         const newOrder = [...order, newItem];
         setOrder(newOrder);
@@ -85,15 +112,26 @@ const CashierPage = () => {
         else if (selectedDrinkIdx > idx) setSelectedDrinkIdx(selectedDrinkIdx - 1);
     };
 
+    const updateSize = (size) => {
+        if (selectedDrinkIdx === null || !order[selectedDrinkIdx]) return;
+        const updatedOrder = [...order];
+        updatedOrder[selectedDrinkIdx] = {
+            ...updatedOrder[selectedDrinkIdx],
+            size_name: size.size_name,
+            base_price: size.price
+        };
+        setOrder(updatedOrder);
+    };
+
     // FIXED: Dynamic Order submission with Credentials
     const submitOrder = async () => {
         if (order.length === 0) return;
         const flattenedItems = [];
         order.forEach(drink => {
             for (let i = 0; i < drink.quantity; i++) {
-                flattenedItems.push({ menu_item_id: drink.menu_item_id, price: drink.base_price });
+                flattenedItems.push({ menu_item_id: drink.menu_item_id, price: drink.base_price, size_name: drink.size_name });
                 drink.toppings.forEach(t => {
-                    flattenedItems.push({ menu_item_id: t.menu_item_id, price: t.base_price });
+                    flattenedItems.push({ menu_item_id: t.menu_item_id, price: t.base_price, size_name: null });
                 });
             }
         });
@@ -140,7 +178,7 @@ const CashierPage = () => {
                         {drinks.map(item => (
                             <button key={item.menu_item_id} onClick={() => addToOrder(item)} style={drinkCard}>
                                 {item.name.toLowerCase()}
-                                <div style={cardPrice}>${item.base_price}</div>
+                                <div style={cardPrice}>from ${getItemSizes(item)[0].price.toFixed(2)}</div>
                             </button>
                         ))}
                     </div>
@@ -152,6 +190,22 @@ const CashierPage = () => {
                     <p style={selectionLabel}>
                         {selectedDrinkIdx !== null ? `modifying item #${selectedDrinkIdx + 1}` : "select item to customize"}
                     </p>
+                    {selectedDrinkIdx !== null && order[selectedDrinkIdx] && (
+                        <div style={sizeSelector}>
+                            {getItemSizes(order[selectedDrinkIdx]).map(size => {
+                                const isActive = order[selectedDrinkIdx]?.size_name === size.size_name;
+                                return (
+                                    <button
+                                        key={size.size_name}
+                                        onClick={() => updateSize(size)}
+                                        style={isActive ? activeSizePill : sizePill}
+                                    >
+                                        {formatSizeName(size.size_name)} ${size.price.toFixed(2)}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                     <div style={grid}>
                         {toppingsOptions.map(t => {
                             const isSelected = order[selectedDrinkIdx]?.toppings.find(st => st.menu_item_id === t.menu_item_id);
@@ -180,7 +234,10 @@ const CashierPage = () => {
                                 style={idx === selectedDrinkIdx ? activeReceiptItem : receiptItem}
                             >
                                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
-                                    <div style={{fontWeight:'700'}}>{item.name.toLowerCase()}</div>
+                                    <div>
+                                        <div style={{fontWeight:'700'}}>{item.name.toLowerCase()}</div>
+                                        <div style={{fontSize:'0.75rem', opacity:0.7}}>{formatSizeName(item.size_name)}</div>
+                                    </div>
                                     <button onClick={(e) => { e.stopPropagation(); removeItem(idx); }} style={deleteIcon}>✕</button>
                                 </div>
                                 
@@ -217,6 +274,9 @@ const mainLayout = { display:'grid', gridTemplateColumns:'1fr 1fr 400px', gap:'2
 const glassPanel = { background:'rgba(255,255,255,0.4)', backdropFilter:'blur(10px)', borderRadius:'30px', padding:'25px', border:'1px solid rgba(255,255,255,0.3)', overflowY:'auto' };
 const panelTitle = { fontSize:'0.8rem', textTransform:'uppercase', letterSpacing:'2px', opacity:0.5, marginBottom:'20px' };
 const grid = { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px, 1fr))', gap:'12px' };
+const sizeSelector = { display:'grid', gridTemplateColumns:'repeat(3, minmax(0, 1fr))', gap:'10px', marginBottom:'15px' };
+const sizePill = { background:'rgba(255,255,255,0.75)', border:'1px solid rgba(45,106,79,0.18)', borderRadius:'16px', padding:'10px', cursor:'pointer', fontWeight:'700', color:'#2d6a4f' };
+const activeSizePill = { ...sizePill, background:'#2d6a4f', color:'white' };
 const drinkCard = { background:'white', border:'none', borderRadius:'20px', padding:'15px', cursor:'pointer', textAlign:'left', fontWeight:'700', color:'#1b4332', boxShadow:'0 4px 6px rgba(0,0,0,0.02)' };
 const toppingCard = { background:'rgba(255,255,255,0.6)', border:'none', borderRadius:'18px', padding:'12px', cursor:'pointer', textAlign:'left', fontWeight:'600', color:'#2d6a4f' };
 const activeToppingCard = { background:'#2d6a4f', border:'none', borderRadius:'18px', padding:'12px', cursor:'pointer', textAlign:'left', fontWeight:'600', color:'white' };

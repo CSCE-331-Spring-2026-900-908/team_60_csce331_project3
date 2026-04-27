@@ -15,7 +15,10 @@ router.get("/", async (req, res) => {
         o.status, 
         o.total_amount,
         o."time" AS order_time,
-        mi.name AS item_name,
+        CASE
+          WHEN oi.size_name IS NOT NULL THEN CONCAT(oi.size_name, ' ', mi.name)
+          ELSE mi.name
+        END AS item_name,
         oi.quantity
       FROM public.orders o
       LEFT JOIN public.orderitems oi ON o.order_id = oi.order_id
@@ -79,8 +82,8 @@ router.post("/", async (req, res) => {
     for (const item of items) {
       currentItemId++; 
       await client.query(
-        'INSERT INTO public.orderitems (order_item_id, order_id, menu_item_id, quantity, price) VALUES ($1, $2, $3, $4, $5)',
-        [currentItemId, newOrderId, item.menu_item_id, item.quantity || 1, item.price || 0]
+        'INSERT INTO public.orderitems (order_item_id, order_id, menu_item_id, quantity, price, size_name) VALUES ($1, $2, $3, $4, $5, $6)',
+        [currentItemId, newOrderId, item.menu_item_id, item.quantity || 1, item.price || 0, item.size_name || null]
       );
     }
 
