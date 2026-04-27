@@ -1,6 +1,7 @@
 // Check for the environment variable, ensuring we handle the /api suffix correctly
 const VITE_URL = import.meta.env.VITE_API_URL;
 const API_BASE = VITE_URL ? `${VITE_URL}/api` : "http://localhost:8080/api";
+const API_URL = import.meta.env.VITE_API_URL || "https://auraboba-be.onrender.com/api";
 
 /**
  * HELPER: Standard fetch config to ensure cookies (Google Auth) are sent.
@@ -39,25 +40,50 @@ export async function fetchSalesSummary() {
   return response.json();
 }
 
+export async function fetchDogFeature() {
+  const response = await fetch(`${API_BASE}/dogs/random`, fetchConfig());
+  if (!response.ok) throw new Error("Failed to fetch dog feature");
+  return response.json();
+}
+
 export async function fetchTopItems() {
   const response = await fetch(`${API_BASE}/manager/top-items`, fetchConfig());
   if (!response.ok) throw new Error("Failed to fetch top items");
   return response.json();
 }
 
-export async function placeOrder(orderData) {
-  const response = await fetch(`${API_BASE}/orders`, fetchConfig({
-    method: "POST",
-    body: JSON.stringify(orderData),
-  }));
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to place order in database");
+export const placeOrder = async (orderData) => {
+  try {
+    const response = await fetch(`${API_URL}/api/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData),
+    });
+
+    // 1. Get the raw text first, in case the server crashes and doesn't send JSON
+    const text = await response.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      result = { error: text }; // Fallback if the server sent raw HTML/Text
+    }
+
+    if (!response.ok) {
+      // 2. This will now show the REAL database error from the backend
+      const errorMessage = result.error || result.message || text || "Unknown server error";
+      console.error("SERVER ERROR RESPONSE:", errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    return result;
+  } catch (err) {
+    console.error("DEBUG ERROR:", err);
+    // 3. This alert will now display the exact error message
+    alert("DATABASE ERROR: " + err.message);
+    throw err;
   }
-  
-  return response.json();
-}
+};
 
 export async function updateOrderStatus(orderId, status) {
   const response = await fetch(`${API_BASE}/orders/${orderId}`, {
