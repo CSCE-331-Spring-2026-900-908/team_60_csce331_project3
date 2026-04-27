@@ -344,6 +344,13 @@ export default function CustomerPage() {
       
       <Link to="/" style={backButtonStyle}
 	aria-label = {"Return to portal button"}
+	onClick = {(e) => {
+		e.preventDefault();
+		window.narrate("Returning to Home portal page.");
+		setTimeout(() =>{
+			window.location.href = "/";
+		}, 300);
+	}}
        >
 	← portal
       </Link>

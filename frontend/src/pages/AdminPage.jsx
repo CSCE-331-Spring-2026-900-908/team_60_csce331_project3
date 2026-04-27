@@ -38,7 +38,20 @@ export default function AdminPage() {
 
   return (
     <div style={auraContainer}>
-      <Link to="/" style={backButtonStyle}>← portal</Link>
+      <Link
+	to="/" 
+	style={backButtonStyle}
+	aria-label = {"Return to portal button."}
+	onClick={(e) => {
+		e.preventDefault();
+		window.narrate("Returning to Home Portal Page.");
+		setTimeout(() => {
+			window.location.href = "/";
+		}, 300);
+	}}
+      >
+	← portal
+      </Link>
 
       <header style={auraHeader}>
         
