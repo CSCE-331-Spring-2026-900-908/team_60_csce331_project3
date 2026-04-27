@@ -11,9 +11,14 @@ export default function PortalPage() {
   // Logic to handle the redirect and save the clicked destination
   const handleProtectedLogin = (e, destination) => {
     e.preventDefault();
+
+    const displayLabel = destination.replace("/", "");
+    window.narrate(`Opening ${displayLabel} page`);
     const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
     // Pass the destination in the URL
-    window.location.href = `${BACKEND_URL}/auth/google?state=${destination}`; 
+    setTimeout(() => {
+	window.location.href = `${BACKEND_URL}/auth/google?state=${destination}`; 
+    }, 300 );
   };
 
   useEffect(() => {
@@ -100,28 +105,71 @@ export default function PortalPage() {
       <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", justifyContent: "center", maxWidth: "1000px" }}>
         
         {/* PUBLIC ROUTES */}
-        <Link to="/customer" style={cardStyle} className="hover-lift">
+        <Link 
+		to="/customer"
+		style={cardStyle} 
+		className="hover-lift"
+		aria-label = "Menu Kiosk Page. Self serving ordering."
+		onClick = {(e) => {
+			e.preventDefault();
+			window.narrate("Opening kiosk page");
+
+			setTimeout(() => {
+				window.location.href = "/customer";
+			}, 300);
+		}}
+	>
           <h2 style={titleStyle}>kiosk</h2>
           <p style={descStyle}>self-service ordering</p>
         </Link>
 
         {/* PROTECTED ROUTES: Now passing the route string to the handler */}
-        <a href="#" onClick={(e) => handleProtectedLogin(e, "/cashierpage")} style={cardStyle} className="hover-lift">
+        <a 
+		href="#" 
+		onClick={(e) => handleProtectedLogin(e, "/cashierpage")} 
+		style={cardStyle} 
+		className="hover-lift"
+		aria-label = "Cashier Page. In store employee order processing."
+	>
           <h2 style={titleStyle}>cashier</h2>
           <p style={descStyle}>in-store processing</p>
         </a>
 
-        <a href="#" onClick={(e) => handleProtectedLogin(e, "/kitchen")} style={cardStyle} className="hover-lift">
+        <a 
+		href="#" 
+		onClick={(e) => handleProtectedLogin(e, "/kitchen")} 
+		style={cardStyle} 
+		className="hover-lift"
+		aria-label = "Kitchen Page. In store employee order fulfillment."
+	>
           <h2 style={titleStyle}>kitchen</h2>
           <p style={descStyle}>order fulfillment queue</p>
         </a>
 
-        <a href="#" onClick={(e) => handleProtectedLogin(e, "/manager")} style={cardStyle} className="hover-lift">
+        <a 
+		href="#" 
+		onClick={(e) => handleProtectedLogin(e, "/manager")} 
+		style={cardStyle} 
+		className="hover-lift"
+		aria-label = "Manager page. View in store employee stats and inventory."
+	>
           <h2 style={titleStyle}>manager</h2>
           <p style={descStyle}>stats and inventory</p>
         </a>
 
-        <Link to="/menuboard" style={cardStyle} className="hover-lift">
+        <Link 
+		to="/menuboard" 
+		style={cardStyle} 
+		className="hover-lift"
+		aria-label = "Menu board page. Digital storefront display."
+		onClick = {(e) => {
+			e.preventDefault();
+			window.narrate("Opening menu board page.");
+			setTimeout(() => {
+				window.location.href = "/menuboard";
+			}, 300);
+		}}
+	>
           <h2 style={titleStyle}>menu</h2>
           <p style={descStyle}>digital storefront display</p>
         </Link>

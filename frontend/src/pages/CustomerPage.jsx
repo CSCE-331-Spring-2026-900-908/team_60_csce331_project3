@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { fetchMenu, placeOrder } from "../services/api";
 import Weather from '../components/Weather';
 import { GoogleLogin } from '@react-oauth/google';
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+
 
 const drinkImageMap = {
   "mango fruit tea": "/images/drinks/mango-fruit-tea.jpg",
@@ -86,8 +87,41 @@ export default function CustomerPage() {
   const [gachaResult, setGachaResult] = useState(null);
   const [gachaRolls, setGachaRolls] = useState(3);
   const [gachaSpinning, setGachaSpinning] = useState(false);
-
+  const [announcement, setAnnouncement] = useState({text : "", key : 0});
   const tempInflectionPoint = 60; 
+  const prevCartSize = useRef(cart.length);  
+  const modalRef = useRef(null);
+
+  const srStyleOnly = {
+	position: 'absolute',
+	width: '1px',
+	height: '1px',
+	padding: 0,
+	margin: '-1px',
+	overflow: 'hidden',
+	clipPath: 'inset(%50)',
+	border: '0',
+  };
+  useEffect(() => {
+	if(prevCartSize.current > 0 && cart.length == 0){
+		window.narrate("Your basket is now empty.");
+	}
+	prevCartSize.current = cart.length;
+  }, [cart.length]);
+  useEffect(() => {
+	setAnnouncement({ text: ""});
+	const timeout = setTimeout(() => {
+		setAnnouncement({ text: `Showing ${activeCategory} drinks.` });
+	}, 100);
+	
+	return () => clearTimeout(timeout);
+  }, [activeCategory]);
+
+  useEffect(() => {
+	if(modalRef.current && showToppings){
+		modalRef.current.focus(); //move narrator focus to toppings window
+	}
+  }, [showToppings]);
 
   useEffect(() => {
     async function loadMenu() {
@@ -264,6 +298,15 @@ export default function CustomerPage() {
   function confirmAddToCart() {
     const chosenSize = selectedSize || getDefaultSize(pendingItem);
     const cartId = `${pendingItem.menu_item_id}-${chosenSize.size_name}-${selectedToppings.map(t => t.menu_item_id).sort().join('-')}`;
+    
+    const drinkName = pendingItem.name;
+    const sizeName = formatSizeName(chosenSize.size_name);
+    const toppingsList = selectedToppings.length > 0
+	? ` with ${selectedToppings.map(t => t.name.toLowerCase()).join(", ")}`
+	: "";
+
+    const announcementText = `Added ${sizeName} ${drinkName} ${toppingsList} to your basket.`;
+
     setCart((prev) => {
       const existing = prev.find(x => x.cartId === cartId);
       if (existing) return prev.map(x => x.cartId === cartId ? { ...x, quantity: x.quantity + 1 } : x);
@@ -277,6 +320,9 @@ export default function CustomerPage() {
         toppings: selectedToppings
       }];
     });
+
+    window.narrate(announcementText);
+
     setShowToppings(false);
   }
 
@@ -286,11 +332,31 @@ export default function CustomerPage() {
 
   return (
     <div style={auraContainer}>
-      <Link to="/" style={backButtonStyle}>← portal</Link>
+      <div
+	role = "status"	
+	aria-live="polite"
+	aria-atomic="true"
+	style={srStyleOnly}
+      >
+	{announcement.text}
+      </div>
+
+      
+      <Link to="/" style={backButtonStyle}
+	aria-label = {"Return to portal button"}
+       >
+	← portal
+      </Link>
 
       {showToppings && (
         <div style={modalOverlay}>
-          <div style={auraModal}>
+          <div 
+		ref={modalRef}
+		tabIndex={-1}
+		role="dialog"
+		aria-modal="true"
+		style={auraModal}
+	  >
             <h2 style={itemTitle}>customize {pendingItem?.name.toLowerCase()}</h2>
             <div style={sizePicker}>
               {getItemSizes(pendingItem).map((size) => {
@@ -350,11 +416,14 @@ export default function CustomerPage() {
         {categories.map(cat => (
           <button
 		key={cat} 
-		onClick={() => setActiveCategory(cat)} 
+		onClick={() => {
+			setActiveCategory(cat);
+			window.narrate(`Now showing ${cat} drinks category`);
+		}}
 		style={tabStyle(activeCategory === cat)}
 		role = "tab"
-		aria-selected={activeCategory === cat)}
-		aria-label={`${cat} menu category`}
+		aria-selected={activeCategory === cat}
+		aria-label={`${cat} category, ${activeCategory === cat ? 'currently selected' : ''}`}
 		>
 		{cat}
 	  </button>
@@ -438,7 +507,17 @@ export default function CustomerPage() {
                 <div style={auraQtyControls}>
                   <button 
 			style={auraQtyBtn} 
-			onClick={() => changeQuantity(item.cartId, -1)}
+			onClick={() => {
+				const newQuantity = item.quantity -1;
+				
+				changeQuantity(item.cartId, -1);
+				
+				if(newQuantity > 0){
+					window.narrate(`Removed one order of ${item.name}, new quantity is ${newQuantity}.`);
+				} else{
+					window.narrate(`Removed all orders of ${item.name} from the basket.`);
+				}
+			}}
 			aria-label={`Decrease Quantity of ${item.name}`}
 			>
 			-
