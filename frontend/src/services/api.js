@@ -1,6 +1,7 @@
 // Check for the environment variable, ensuring we handle the /api suffix correctly
 const VITE_URL = import.meta.env.VITE_API_URL;
 const API_BASE = VITE_URL ? `${VITE_URL}/api` : "http://localhost:8080/api";
+const API_URL = import.meta.env.VITE_API_URL || "https://auraboba-be.onrender.com/api";
 
 /**
  * HELPER: Standard fetch config to ensure cookies (Google Auth) are sent.
@@ -45,7 +46,7 @@ export async function fetchTopItems() {
   return response.json();
 }
 
-const placeOrder = async (orderData) => {
+export const placeOrder = async (orderData) => {
   try {
     const response = await fetch(`${API_URL}/api/orders`, {
       method: "POST",
