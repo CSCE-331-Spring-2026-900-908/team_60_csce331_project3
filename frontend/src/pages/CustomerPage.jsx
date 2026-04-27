@@ -342,9 +342,22 @@ export default function CustomerPage() {
 
       {message && <div style={auraNotification}>{message}</div>}
 
-      <div style={tabContainer}>
+      <div 
+	style={tabContainer}
+	role = "tablist"
+	aria-label = "Menu Categories"
+      >
         {categories.map(cat => (
-          <button key={cat} onClick={() => setActiveCategory(cat)} style={tabStyle(activeCategory === cat)}>{cat}</button>
+          <button
+		key={cat} 
+		onClick={() => setActiveCategory(cat)} 
+		style={tabStyle(activeCategory === cat)}
+		role = "tab"
+		aria-selected={activeCategory === cat)}
+		aria-label={`${cat} menu category`}
+		>
+		{cat}
+	  </button>
         ))}
       </div>
 
