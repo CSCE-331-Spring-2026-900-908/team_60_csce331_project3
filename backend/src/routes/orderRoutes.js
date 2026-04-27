@@ -58,11 +58,7 @@ router.post("/", async (req, res) => {
   const client = await pool.connect();
   const { total_amount, items, customer_id, is_redemption } = req.body; 
 
-  // 1. Debugging: Log exactly what arrives at the backend
-  console.log("DEBUG: Incoming Order | ID:", customer_id, "| Total:", total_amount, "| Type:", typeof customer_id);
-  
   try {
-    // 2. Fail-safe ID handling
     let finalCustomerId = "1";
     if (customer_id && customer_id !== "undefined" && customer_id !== "null") {
         finalCustomerId = String(customer_id);
@@ -70,7 +66,7 @@ router.post("/", async (req, res) => {
 
     await client.query('BEGIN');
 
-    // 3. Create the Order
+    // 1. Create the Order
     const orderResult = await client.query(
       `INSERT INTO public.orders (customer_id, employee_id, date, status, total_amount, time, z_reported) 
        VALUES ($1, 1, CURRENT_DATE, 'pending', $2, LOCALTIME, false) 
@@ -79,7 +75,7 @@ router.post("/", async (req, res) => {
     );
     const newOrderId = orderResult.rows[0].order_id;
 
-    // 4. Handle Order Items
+    // 2. Handle Order Items
     const maxIdResult = await client.query("SELECT COALESCE(MAX(order_item_id), 0) AS max_id FROM public.orderitems");
     let currentItemId = parseInt(maxIdResult.rows[0].max_id, 10);
 
@@ -91,8 +87,16 @@ router.post("/", async (req, res) => {
       );
     }
 
-    // 5. Stamp Logic
+    // 3. Stamp Logic (The Safety Net)
     if (finalCustomerId !== "1") {
+      // Create user if they are missing, then update stamps
+      await client.query(
+        `INSERT INTO public.customers (customer_id, name, stamps) 
+         VALUES ($1, 'New User', 0) 
+         ON CONFLICT (customer_id) DO NOTHING`, 
+        [finalCustomerId]
+      );
+
       if (is_redemption) {
         await client.query(
           `UPDATE public.customers SET stamps = GREATEST(stamps - 10, 0) WHERE customer_id = $1`, 
@@ -112,8 +116,7 @@ router.post("/", async (req, res) => {
 
   } catch (err) {
     await client.query('ROLLBACK');
-    // 6. FORCE the error to be loud so your frontend alert shows the real reason
-    console.error("!!! FATAL DB ERROR !!!", err);
+    console.error("ORDER POST ERROR:", err);
     res.status(500).json({ error: "DB ERROR: " + err.message });
   } finally {
     client.release();
