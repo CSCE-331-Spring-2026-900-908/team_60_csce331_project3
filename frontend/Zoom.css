@@ -204,3 +204,80 @@ button {
     height: 160px;
   }
 }
+.contrast-btn {
+  min-width: 130px;
+}
+
+.contrast-btn.active {
+  background: #1b4332;
+  color: #ffffff;
+  border-color: #1b4332;
+}
+
+/* High contrast accessibility mode */
+body.high-contrast-mode {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+
+/* Make text readable without forcing every hover to black */
+body.high-contrast-mode h1,
+body.high-contrast-mode h2,
+body.high-contrast-mode h3,
+body.high-contrast-mode h4,
+body.high-contrast-mode h5,
+body.high-contrast-mode h6,
+body.high-contrast-mode p,
+body.high-contrast-mode span,
+body.high-contrast-mode label,
+body.high-contrast-mode li {
+  color: #111111 !important;
+  opacity: 1 !important;
+}
+
+/* Keep links and buttons readable */
+body.high-contrast-mode button,
+body.high-contrast-mode a {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border: 2px solid #111111 !important;
+  box-shadow: none !important;
+}
+
+/* Better hover: visible, but not harsh black */
+body.high-contrast-mode button:hover,
+body.high-contrast-mode a:hover {
+  background: #fff7cc !important;
+  color: #111111 !important;
+  border-color: #111111 !important;
+}
+
+/* Keep portal cards from turning weird */
+body.high-contrast-mode .hover-lift:hover {
+  background: #fff7cc !important;
+  color: #111111 !important;
+  transform: translateY(-8px);
+}
+
+/* Make cards/panels easier to distinguish */
+body.high-contrast-mode section,
+body.high-contrast-mode aside,
+body.high-contrast-mode article {
+  background: #ffffff !important;
+  border: 2px solid #111111 !important;
+}
+
+/* Strong focus outline for keyboard users */
+body.high-contrast-mode button:focus,
+body.high-contrast-mode a:focus,
+body.high-contrast-mode input:focus,
+body.high-contrast-mode select:focus,
+body.high-contrast-mode textarea:focus {
+  outline: 4px solid #ffcc00 !important;
+  outline-offset: 3px !important;
+}
+
+/* Do not mess with images */
+body.high-contrast-mode img {
+  filter: none !important;
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 const ZOOM_LEVELS = [1, 1.25, 1.5, 1.75, 2];
+
 const TEXT_SELECTOR =
   "h1, h2, h3, h4, h5, h6, p, span, button, a, label, li, td, th, div";
 
@@ -43,12 +44,16 @@ export default function Zoom() {
     return localStorage.getItem("magnifierMode") === "true";
   });
 
+  const [highContrast, setHighContrast] = useState(() => {
+    return localStorage.getItem("highContrastMode") === "true";
+  });
+
   const [lens, setLens] = useState({
     visible: false,
     x: 0,
     y: 0,
     text: "",
-    style: {}
+    style: {},
   });
 
   useEffect(() => {
@@ -68,6 +73,20 @@ export default function Zoom() {
       setLens((prev) => ({ ...prev, visible: false }));
     }
   }, [magnifierMode]);
+
+  useEffect(() => {
+    if (highContrast) {
+      document.body.classList.add("high-contrast-mode");
+    } else {
+      document.body.classList.remove("high-contrast-mode");
+    }
+
+    localStorage.setItem("highContrastMode", String(highContrast));
+
+    return () => {
+      document.body.classList.remove("high-contrast-mode");
+    };
+  }, [highContrast]);
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -129,9 +148,9 @@ export default function Zoom() {
           letterSpacing: computed.letterSpacing,
           textTransform: computed.textTransform,
           textAlign: computed.textAlign,
-          fontSize: `${Math.max(fontSize * 1.85, 18)}px`,
-          lineHeight: "1.35"
-        }
+          fontSize: `${Math.min(Math.max(fontSize * 1.5, 18), 42)}px`,
+          lineHeight: "1.35",
+        },
       });
     }
 
@@ -197,6 +216,16 @@ export default function Zoom() {
               >
                 Reset
               </button>
+
+              <button
+                type="button"
+                className={`zoom-btn contrast-btn ${highContrast ? "active" : ""}`}
+                onClick={() => setHighContrast((prev) => !prev)}
+                aria-pressed={highContrast}
+                aria-label="Toggle high contrast mode"
+              >
+                {highContrast ? "Contrast On" : "High Contrast"}
+              </button>
             </div>
 
             <div className="magnifier-row">
@@ -224,8 +253,12 @@ export default function Zoom() {
           type="button"
           className="zoom-fab"
           onClick={() => setOverlayOpen((prev) => !prev)}
-          aria-label={overlayOpen ? "Hide accessibility controls" : "Show accessibility controls"}
-          title={overlayOpen ? "Hide accessibility controls" : "Show accessibility controls"}
+          aria-label={
+            overlayOpen ? "Hide accessibility controls" : "Show accessibility controls"
+          }
+          title={
+            overlayOpen ? "Hide accessibility controls" : "Show accessibility controls"
+          }
         >
           🔍
         </button>
@@ -237,7 +270,7 @@ export default function Zoom() {
           aria-hidden="true"
           style={{
             left: `${lens.x}px`,
-            top: `${lens.y}px`
+            top: `${lens.y}px`,
           }}
         >
           <div className="live-lens-inner">

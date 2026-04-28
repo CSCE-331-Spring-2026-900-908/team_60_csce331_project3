@@ -117,7 +117,7 @@ export default function PortalPage() {
         <h1 style={{ fontSize: "4.5rem", margin: "0", fontWeight: "800", color: "#1b4332" }}>
           aura <span style={{fontWeight:'300'}}>boba</span>
         </h1>
-        <p style={{ color: "#2d6a4f", fontSize: "0.75rem", marginTop: "10px", textTransform: "uppercase", letterSpacing: "0.6rem", opacity: 0.6 }}>
+        <p style={{ color: "#2d6a4f", fontSize: "0.75rem", marginTop: "10px", textTransform: "uppercase", letterSpacing: "0.6rem", opacity: 0.85 }}>
           est. 2026
         </p>
       </div>
