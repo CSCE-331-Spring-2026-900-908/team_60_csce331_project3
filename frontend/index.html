@@ -26,7 +26,7 @@
 
                 /* keyboard shortcut of alt + n to allow for narrator to be enabled after first visit */
                 document.addEventListener("keydown", (e) => {
-                        if(e.key === "n" && e.altKey){
+                        if(e.key === "b" && e.altKey){
                                 narrationEnable = !narrationEnable;
                                 localStorage.setItem("narration", narrationEnable);
 
@@ -71,10 +71,10 @@
                                         localStorage.setItem("narration", enabled);
                                         banner.remove();
                                         if(enabled){
-                                                const confirmMsg = new SpeechSynthesisUtterance("Narration is enabled. Press Alt and N simultaneously to toggle narration on and off.");
+                                                const confirmMsg = new SpeechSynthesisUtterance("Narration is enabled. Press Alt and B simultaneously to toggle narration on and off.");
                                                 window.speechSynthesis.speak(confirmMsg);
                                         } else{
-                                                const negationMsg = new SpeechSynthesisUtterance("Narration is disabled. Press Alt and N simultaneously to toggle narration on and off.");
+                                                const negationMsg = new SpeechSynthesisUtterance("Narration is disabled. Press Alt and B simultaneously to toggle narration on and off.");
                                                 window.speechSynthesis.speak(negationMsg);
                                         }
                                 };
